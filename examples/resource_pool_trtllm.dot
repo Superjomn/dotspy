@@ -1,0 +1,197 @@
+digraph ResourcePoolManager_TRTLLM {
+    rankdir=TB;
+    node [shape=box, style="filled", fontname="Arial"];
+    compound=true;
+    
+    // Title
+    label="ResourcePoolManager: TRT-LLM Allocation\n1 Node, 8 GPUs, TP=4 (2 Replicas)";
+    labelloc=t;
+    fontsize=16;
+    fontname="Arial Bold";
+    
+    // ResourcePoolManager
+    subgraph cluster_manager {
+        label="ResourcePoolManager";
+        color=blue;
+        style=filled;
+        fillcolor="#e3f2fd";
+        
+        RPM [label="ResourcePoolManager\n\nresource_pool_spec:\n{'global_pool': (max_colocate_count=3,\n  [8])}\n\nmapping:\n{ActorRollout: 'global_pool'\n Critic: 'global_pool'}", 
+             shape=box, fillcolor="#bbdefb", style="filled,rounded"];
+    }
+    
+    // RayResourcePool
+    subgraph cluster_pool {
+        label="RayResourcePool ('global_pool')";
+        color=darkgreen;
+        style=filled;
+        fillcolor="#e8f5e9";
+        
+        RRP [label="RayResourcePool\n\nprocess_on_nodes: [8]\nmax_colocate_count: 3\nuse_gpu: True", 
+             shape=box, fillcolor="#c8e6c9", style="filled,rounded"];
+    }
+    
+    // Ray Placement Group
+    subgraph cluster_pg {
+        label="Ray Placement Group (STRICT_PACK)\nNode: ray-node-1";
+        color=purple;
+        style=filled;
+        fillcolor="#f3e5f5";
+        
+        PG [label="PlacementGroup\n\nBundles (8 total):\nEach: {CPU: 3, GPU: 1}\n\nStrategy: STRICT_PACK", 
+            shape=box, fillcolor="#e1bee7", style="filled,rounded"];
+    }
+    
+    // Physical GPUs
+    subgraph cluster_gpus {
+        label="Physical Node (8 GPUs)";
+        color=black;
+        style=filled;
+        fillcolor="#fff9c4";
+        
+        subgraph cluster_replica0 {
+            label="Replica 0 (TP=4)";
+            style=dashed;
+            color=red;
+            
+            GPU0 [label="GPU 0\nBundle 0", fillcolor="#ffeb3b"];
+            GPU1 [label="GPU 1\nBundle 1", fillcolor="#ffeb3b"];
+            GPU2 [label="GPU 2\nBundle 2", fillcolor="#ffeb3b"];
+            GPU3 [label="GPU 3\nBundle 3", fillcolor="#ffeb3b"];
+        }
+        
+        subgraph cluster_replica1 {
+            label="Replica 1 (TP=4)";
+            style=dashed;
+            color=red;
+            
+            GPU4 [label="GPU 4\nBundle 4", fillcolor="#ffeb3b"];
+            GPU5 [label="GPU 5\nBundle 5", fillcolor="#ffeb3b"];
+            GPU6 [label="GPU 6\nBundle 6", fillcolor="#ffeb3b"];
+            GPU7 [label="GPU 7\nBundle 7", fillcolor="#ffeb3b"];
+        }
+    }
+    
+    // Worker Allocation - Replica 0
+    subgraph cluster_workers_r0 {
+        label="Worker Group & TRT-LLM Server - Replica 0";
+        color=darkblue;
+        style=filled;
+        fillcolor="#e1f5fe";
+        
+        subgraph cluster_hybrid_r0 {
+            label="HybridEngine Workers (Colocate Slot 0)";
+            style=dashed;
+            color=green;
+            
+            AW0 [label="ActorRolloutRefWorker\nRank 0\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+            AW1 [label="ActorRolloutRefWorker\nRank 1\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+            AW2 [label="ActorRolloutRefWorker\nRank 2\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+            AW3 [label="ActorRolloutRefWorker\nRank 3\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+        }
+        
+        TRTLLM0 [label="TRTLLMHttpServer\n(Ray Actor)\nReplica 0\n\nTP=4 via TRT-LLM's\ninternal orchestration", 
+                 fillcolor="#4fc3f7", shape=box3d, style="filled"];
+    }
+    
+    // Worker Allocation - Replica 1
+    subgraph cluster_workers_r1 {
+        label="Worker Group & TRT-LLM Server - Replica 1";
+        color=darkblue;
+        style=filled;
+        fillcolor="#e1f5fe";
+        
+        subgraph cluster_hybrid_r1 {
+            label="HybridEngine Workers (Colocate Slot 0)";
+            style=dashed;
+            color=green;
+            
+            AW4 [label="ActorRolloutRefWorker\nRank 4\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+            AW5 [label="ActorRolloutRefWorker\nRank 5\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+            AW6 [label="ActorRolloutRefWorker\nRank 6\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+            AW7 [label="ActorRolloutRefWorker\nRank 7\n(Training Engine)", fillcolor="#b3e5fc", shape=component];
+        }
+        
+        TRTLLM1 [label="TRTLLMHttpServer\n(Ray Actor)\nReplica 1\n\nTP=4 via TRT-LLM's\ninternal orchestration", 
+                 fillcolor="#4fc3f7", shape=box3d, style="filled"];
+    }
+    
+    // Client Adapters
+    subgraph cluster_adapters {
+        label="TRT-LLM Client Adapters (in each worker)";
+        color=orange;
+        style=filled;
+        fillcolor="#fff3e0";
+        
+        ADAPTER0 [label="TRTLLMAsyncRollout\n(HTTP Client)\nReplica 0", fillcolor="#ffe0b2", shape=note];
+        ADAPTER1 [label="TRTLLMAsyncRollout\n(HTTP Client)\nReplica 1", fillcolor="#ffe0b2", shape=note];
+    }
+    
+    // Connections - Management Flow
+    RPM -> RRP [label="creates", color=blue, penwidth=2];
+    RRP -> PG [label="creates\nPlacement Group", color=darkgreen, penwidth=2];
+    PG -> GPU0 [label="binds", color=purple, style=dashed, lhead=cluster_gpus];
+    
+    // Connections - GPU Assignment Replica 0
+    GPU0 -> AW0 [label="schedules", color=black, style=dotted];
+    GPU1 -> AW1 [label="schedules", color=black, style=dotted];
+    GPU2 -> AW2 [label="schedules", color=black, style=dotted];
+    GPU3 -> AW3 [label="schedules", color=black, style=dotted];
+    
+    GPU0 -> TRTLLM0 [label="uses Bundle 0-3", color=red, style=bold, penwidth=2];
+    GPU1 -> TRTLLM0 [style=invis];
+    GPU2 -> TRTLLM0 [style=invis];
+    GPU3 -> TRTLLM0 [style=invis];
+    
+    // Connections - GPU Assignment Replica 1
+    GPU4 -> AW4 [label="schedules", color=black, style=dotted];
+    GPU5 -> AW5 [label="schedules", color=black, style=dotted];
+    GPU6 -> AW6 [label="schedules", color=black, style=dotted];
+    GPU7 -> AW7 [label="schedules", color=black, style=dotted];
+    
+    GPU4 -> TRTLLM1 [label="uses Bundle 4-7", color=red, style=bold, penwidth=2];
+    GPU5 -> TRTLLM1 [style=invis];
+    GPU6 -> TRTLLM1 [style=invis];
+    GPU7 -> TRTLLM1 [style=invis];
+    
+    // Connections - Communication
+    AW0 -> ADAPTER0 [label="embeds", color=darkgreen, dir=none, penwidth=2];
+    AW1 -> ADAPTER0 [style=invis];
+    AW2 -> ADAPTER0 [style=invis];
+    AW3 -> ADAPTER0 [style=invis];
+    
+    AW4 -> ADAPTER1 [label="embeds", color=darkgreen, dir=none, penwidth=2];
+    AW5 -> ADAPTER1 [style=invis];
+    AW6 -> ADAPTER1 [style=invis];
+    AW7 -> ADAPTER1 [style=invis];
+    
+    ADAPTER0 -> TRTLLM0 [label="HTTP\nRequests", color=orange, penwidth=2, style=bold];
+    ADAPTER1 -> TRTLLM1 [label="HTTP\nRequests", color=orange, penwidth=2, style=bold];
+    
+    // Weight Sync
+    AW0 -> TRTLLM0 [label="CUDA IPC\nWeight Sync", color=green, penwidth=2, style=dashed, constraint=false];
+    AW4 -> TRTLLM1 [label="CUDA IPC\nWeight Sync", color=green, penwidth=2, style=dashed, constraint=false];
+    
+    // Legend
+    subgraph cluster_legend {
+        label="Legend";
+        color=gray;
+        style=filled;
+        fillcolor=white;
+        
+        L1 [label="Blue: Resource Management", fillcolor="#e3f2fd", shape=box];
+        L2 [label="Red: TP Group Boundaries", fillcolor=white, shape=box, style=dashed, color=red];
+        L3 [label="Orange: HTTP Communication", fillcolor=white, shape=box];
+        L4 [label="Green: Weight Sync (CUDA IPC)", fillcolor=white, shape=box];
+        
+        L1 -> L2 [style=invis];
+        L2 -> L3 [style=invis];
+        L3 -> L4 [style=invis];
+    }
+    
+    // Layout hints
+    {rank=same; GPU0; GPU1; GPU2; GPU3; GPU4; GPU5; GPU6; GPU7;}
+    {rank=same; TRTLLM0; TRTLLM1;}
+    {rank=same; ADAPTER0; ADAPTER1;}
+}
+
