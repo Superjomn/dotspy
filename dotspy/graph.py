@@ -58,7 +58,8 @@ class Graph(GraphAttributes):
         object.__setattr__(self, '_token', None)
     
     def __enter__(self) -> "Graph":
-        self._token = set_current_graph(self)
+        token = set_current_graph(self)
+        object.__setattr__(self, '_token', token)
         return self
     
     def __exit__(self, *args):
@@ -164,7 +165,8 @@ class Subgraph(GraphAttributes):
                 graph._add_subgraph(self)
     
     def __enter__(self) -> "Subgraph":
-        self._token = set_current_subgraph(self)
+        token = set_current_subgraph(self)
+        object.__setattr__(self, '_token', token)
         return self
     
     def __exit__(self, *args):
