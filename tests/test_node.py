@@ -28,7 +28,7 @@ class TestNode(unittest.TestCase):
 
     def test_node_style_object(self):
         style = NodeStyle(shape="circle", color="blue")
-        n = Node("test", style=style)
+        n = Node("test", styles=style)
         self.assertEqual(n.attrs["shape"], "circle")
         self.assertEqual(n.attrs["color"], "blue")
 
@@ -43,15 +43,15 @@ class TestNode(unittest.TestCase):
 
     def test_node_nstyle_parameter(self):
         style = NodeStyle(shape="diamond", color="green")
-        n = Node("test_nstyle", nstyle=style)
+        n = Node("test_nstyle", styles=style)
         self.assertEqual(n.attrs["shape"], "diamond")
         self.assertEqual(n.attrs["color"], "green")
 
-    def test_node_nstyle_vs_style(self):
+    def test_node_styles_priority(self):
         style1 = NodeStyle(shape="box")
         style2 = NodeStyle(shape="circle")
-        # nstyle should take precedence over style
-        n = Node("test_prec", style=style1, nstyle=style2)
+        # style2 should take precedence over style1 in list
+        n = Node("test_prec", styles=[style1, style2])
         self.assertEqual(n.attrs["shape"], "circle")
 
 if __name__ == "__main__":

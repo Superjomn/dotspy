@@ -41,7 +41,7 @@ class TestEdge(unittest.TestCase):
     def test_style_chaining(self):
         n1 = Node("n1")
         n2 = Node("n2")
-        chain = (n1 >> n2).style(color="blue")
+        chain = (n1 >> n2).set_styles(color="blue")
         self.assertEqual(chain.edges[0]._attrs["color"], "blue")
 
     def test_call_syntax(self):

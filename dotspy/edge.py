@@ -1,68 +1,94 @@
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
-from .context import get_current_graph, get_active_edge_styles
-from .style import EdgeStyle
+from pydantic import Field, PrivateAttr, ConfigDict
+from .context import get_active_edge_styles, get_current_graph, get_graph
+from .attributes import EdgeAttributes
+from .style import EdgeStyle, merge_styles
 
 if TYPE_CHECKING:
     from .node import Node
 
-class Edge:
+class Edge(EdgeAttributes):
     """Represents an edge between two nodes."""
+    
+    model_config = ConfigDict(extra='allow', populate_by_name=True)
+    
+    # Use strings for forward references to avoid circular import issues in Pydantic
+    source: Any = Field(..., description="Source node.")
+    target: Any = Field(..., description="Target node.")
+    
+    # Internal state
+    _attrs: Dict[str, Any] = PrivateAttr(default_factory=dict)
     
     def __init__(
         self,
         source: "Node",
         target: "Node",
-        style: Optional[EdgeStyle] = None,
+        styles: Optional[Union[EdgeStyle, List[EdgeStyle]]] = None,
         **attrs
     ):
-        self.source = source
-        self.target = target
-        self._attrs = self._resolve_attrs(style, attrs)
+        # Resolve attributes from context and arguments
+        context_attrs = {}
+        for ctx_style in get_active_edge_styles():
+            context_attrs.update(ctx_style.to_dict())
+            
+        style_attrs = merge_styles(styles)
+            
+        combined_attrs = {**context_attrs, **style_attrs, **attrs}
+        
+        super().__init__(source=source, target=target, **combined_attrs)
         
         # Register with current graph
         self._register()
     
-    def _resolve_attrs(self, style, attrs) -> Dict[str, Any]:
-        """Merge context styles, provided style, and direct attrs."""
-        result = {}
-        for ctx_style in get_active_edge_styles():
-            result.update(ctx_style.to_dict())
-        if style:
-            result.update(style.to_dict())
-        result.update(attrs)
-        return result
-    
     def _register(self):
-        graph = get_current_graph()
+        graph = get_current_graph() or get_graph()
         if graph:
             graph._add_edge(self)
             
-    def __call__(self, style: Optional[EdgeStyle] = None, **attrs) -> "Edge":
+    def __call__(self, styles: Optional[Union[EdgeStyle, List[EdgeStyle]]] = None, **attrs) -> "Edge":
         """Update attributes: (node1 >> node2)(color="red")"""
-        if style:
-            self._attrs.update(style.to_dict())
-        self._attrs.update(attrs)
+        updates = merge_styles(styles)
+        updates.update(attrs)
+        
+        # Update model fields dynamically
+        for k, v in updates.items():
+            setattr(self, k, v)
+            
         return self
     
-    def __or__(self, style: Union[EdgeStyle, Dict[str, Any]]) -> "Edge":
+    def __or__(self, styles: Union[EdgeStyle, List[EdgeStyle], Dict[str, Any]]) -> "Edge":
         """Apply style: (node1 >> node2) | my_style"""
-        if isinstance(style, dict):
-            self._attrs.update(style)
+        if isinstance(styles, dict):
+            self(**styles)
         else:
-            self(style=style)
+            self(styles=styles)
         return self
     
-    def __getitem__(self, style: EdgeStyle) -> "Edge":
+    def __getitem__(self, styles: Union[EdgeStyle, List[EdgeStyle]]) -> "Edge":
         """Apply style: (node1 >> node2)[my_style]"""
-        return self(style=style)
+        return self(styles=styles)
 
-    def style(self, style: Optional[EdgeStyle] = None, **attrs) -> "Edge":
+    def set_styles(self, styles: Optional[Union[EdgeStyle, List[EdgeStyle]]] = None, **attrs) -> "Edge":
         """Explicit method to update style."""
-        return self(style=style, **attrs)
+        # This method is renamed from style() to set_styles() to avoid conflict with 'style' attribute field.
+        return self(styles=styles, **attrs)
 
     def __rshift__(self, other: "Node") -> "EdgeChain":
         """Support edge >> node syntax (chaining)."""
         return EdgeChain([self, Edge(self.target, other)])
+    
+    @property
+    def attrs(self) -> Dict[str, Any]:
+        """Return all attributes as a dictionary (for renderer compatibility)."""
+        # Return merged dict of model fields and extras
+        # Exclude 'source' and 'target' from attributes dict as they are structural and handled separately by renderer
+        return self.model_dump(exclude_none=True, by_alias=True, exclude={'source', 'target'})
+
+    @property
+    def _attrs(self) -> Dict[str, Any]:
+        """Backward compatibility for renderer accessing ._attrs"""
+        return self.attrs
+
 
 class EdgeChain:
     """Represents a chain of edges (e.g. a >> b >> c)."""
@@ -77,16 +103,18 @@ class EdgeChain:
         self.edges.append(new_edge)
         return self
     
-    def __or__(self, style: Union[EdgeStyle, Dict[str, Any]]) -> "EdgeChain":
+    def __or__(self, styles: Union[EdgeStyle, List[EdgeStyle], Dict[str, Any]]) -> "EdgeChain":
         """Apply style to all edges in chain: chain | style"""
         for edge in self.edges:
-            edge | style
+            edge | styles
         return self
     
-    def style(self, style: Optional[EdgeStyle] = None, **attrs) -> "EdgeChain":
+    def set_styles(self, styles: Optional[Union[EdgeStyle, List[EdgeStyle]]] = None, **attrs) -> "EdgeChain":
         """Explicit method to update style for all edges in chain."""
         for edge in self.edges:
-            edge.style(style=style, **attrs)
+            # Call __call__ to update style/attributes since .style() method is shadowed/problematic
+            # We can use the __call__ method we defined in Edge
+            edge(styles=styles, **attrs)
         return self
 
 # Alias for backward compatibility or if Node still expects it

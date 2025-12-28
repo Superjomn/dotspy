@@ -33,7 +33,7 @@ class TestGraph(unittest.TestCase):
     
     def test_graph_style(self):
         style = GraphStyle(rankdir="LR")
-        g = Graph(style=style)
+        g = Graph(styles=style)
         self.assertEqual(g._attrs["rankdir"], "LR")
 
     def test_subgraph_cluster_name(self):

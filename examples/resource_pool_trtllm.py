@@ -15,35 +15,35 @@ def generate_graph():
             
             # cluster_manager
             with Subgraph("cluster_manager", label="ResourcePoolManager", color="blue", 
-                          style=GraphStyle(style="filled"), fillcolor="#e3f2fd") as s_manager:
+                          styles=GraphStyle(style="filled"), fillcolor="#e3f2fd") as s_manager:
                 rpm = Node("RPM", label="ResourcePoolManager\n\nresource_pool_spec:\n{'global_pool': (max_colocate_count=3,\n  [8])}\n\nmapping:\n{ActorRollout: 'global_pool'\n Critic: 'global_pool'}",
                            shape="box", fillcolor="#bbdefb", style="filled,rounded")
                 
             # cluster_pool
             with Subgraph("cluster_pool", label="RayResourcePool ('global_pool')", color="darkgreen",
-                          style=GraphStyle(style="filled"), fillcolor="#e8f5e9") as s_pool:
+                          styles=GraphStyle(style="filled"), fillcolor="#e8f5e9") as s_pool:
                 rrp = Node("RRP", label="RayResourcePool\n\nprocess_on_nodes: [8]\nmax_colocate_count: 3\nuse_gpu: True",
                            shape="box", fillcolor="#c8e6c9", style="filled,rounded")
                 
             # cluster_pg
             with Subgraph("cluster_pg", label="Ray Placement Group (STRICT_PACK)\nNode: ray-node-1",
-                          color="purple", style=GraphStyle(style="filled"), fillcolor="#f3e5f5") as s_pg:
+                          color="purple", styles=GraphStyle(style="filled"), fillcolor="#f3e5f5") as s_pg:
                 pg = Node("PG", label="PlacementGroup\n\nBundles (8 total):\nEach: {CPU: 3, GPU: 1}\n\nStrategy: STRICT_PACK",
                           shape="box", fillcolor="#e1bee7", style="filled,rounded")
                 
             # cluster_gpus
             with Subgraph("cluster_gpus", label="Physical Node (8 GPUs)", color="black",
-                          style=GraphStyle(style="filled"), fillcolor="#fff9c4") as s_gpus:
+                          styles=GraphStyle(style="filled"), fillcolor="#fff9c4") as s_gpus:
                 
                 # cluster_replica0
-                with Subgraph("cluster_replica0", label="Replica 0 (TP=4)", style=GraphStyle(style="dashed"), color="red") as s_rep0:
+                with Subgraph("cluster_replica0", label="Replica 0 (TP=4)", styles=GraphStyle(style="dashed"), color="red") as s_rep0:
                     gpu0 = Node("GPU0", label="GPU 0\nBundle 0", fillcolor="#ffeb3b")
                     gpu1 = Node("GPU1", label="GPU 1\nBundle 1", fillcolor="#ffeb3b")
                     gpu2 = Node("GPU2", label="GPU 2\nBundle 2", fillcolor="#ffeb3b")
                     gpu3 = Node("GPU3", label="GPU 3\nBundle 3", fillcolor="#ffeb3b")
                     
                 # cluster_replica1
-                with Subgraph("cluster_replica1", label="Replica 1 (TP=4)", style=GraphStyle(style="dashed"), color="red") as s_rep1:
+                with Subgraph("cluster_replica1", label="Replica 1 (TP=4)", styles=GraphStyle(style="dashed"), color="red") as s_rep1:
                     gpu4 = Node("GPU4", label="GPU 4\nBundle 4", fillcolor="#ffeb3b")
                     gpu5 = Node("GPU5", label="GPU 5\nBundle 5", fillcolor="#ffeb3b")
                     gpu6 = Node("GPU6", label="GPU 6\nBundle 6", fillcolor="#ffeb3b")
@@ -51,10 +51,10 @@ def generate_graph():
                     
             # Worker Allocation - Replica 0
             with Subgraph("cluster_workers_r0", label="Worker Group & TRT-LLM Server - Replica 0",
-                          color="darkblue", style=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s_work_r0:
+                          color="darkblue", styles=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s_work_r0:
                 
                 with Subgraph("cluster_hybrid_r0", label="HybridEngine Workers (Colocate Slot 0)",
-                              style=GraphStyle(style="dashed"), color="green") as s_hybrid_r0:
+                              styles=GraphStyle(style="dashed"), color="green") as s_hybrid_r0:
                     aw0 = Node("AW0", label="ActorRolloutRefWorker\nRank 0\n(Training Engine)", fillcolor="#b3e5fc", shape="component")
                     aw1 = Node("AW1", label="ActorRolloutRefWorker\nRank 1\n(Training Engine)", fillcolor="#b3e5fc", shape="component")
                     aw2 = Node("AW2", label="ActorRolloutRefWorker\nRank 2\n(Training Engine)", fillcolor="#b3e5fc", shape="component")
@@ -65,10 +65,10 @@ def generate_graph():
                 
             # Worker Allocation - Replica 1
             with Subgraph("cluster_workers_r1", label="Worker Group & TRT-LLM Server - Replica 1",
-                          color="darkblue", style=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s_work_r1:
+                          color="darkblue", styles=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s_work_r1:
                 
                 with Subgraph("cluster_hybrid_r1", label="HybridEngine Workers (Colocate Slot 0)",
-                              style=GraphStyle(style="dashed"), color="green") as s_hybrid_r1:
+                              styles=GraphStyle(style="dashed"), color="green") as s_hybrid_r1:
                     aw4 = Node("AW4", label="ActorRolloutRefWorker\nRank 4\n(Training Engine)", fillcolor="#b3e5fc", shape="component")
                     aw5 = Node("AW5", label="ActorRolloutRefWorker\nRank 5\n(Training Engine)", fillcolor="#b3e5fc", shape="component")
                     aw6 = Node("AW6", label="ActorRolloutRefWorker\nRank 6\n(Training Engine)", fillcolor="#b3e5fc", shape="component")
@@ -79,7 +79,7 @@ def generate_graph():
                 
             # Client Adapters
             with Subgraph("cluster_adapters", label="TRT-LLM Client Adapters (in each worker)",
-                          color="orange", style=GraphStyle(style="filled"), fillcolor="#fff3e0") as s_adapters:
+                          color="orange", styles=GraphStyle(style="filled"), fillcolor="#fff3e0") as s_adapters:
                 adapter0 = Node("ADAPTER0", label="TRTLLMAsyncRollout\n(HTTP Client)\nReplica 0", fillcolor="#ffe0b2", shape="note")
                 adapter1 = Node("ADAPTER1", label="TRTLLMAsyncRollout\n(HTTP Client)\nReplica 1", fillcolor="#ffe0b2", shape="note")
                 
@@ -138,7 +138,7 @@ def generate_graph():
             
             # Legend
             with Subgraph("cluster_legend", label="Legend", color="gray", 
-                          style=GraphStyle(style="filled"), fillcolor="white") as s_legend:
+                          styles=GraphStyle(style="filled"), fillcolor="white") as s_legend:
                 l1 = Node("L1", label="Blue: Resource Management", fillcolor="#e3f2fd", shape="box")
                 l2 = Node("L2", label="Red: TP Group Boundaries", fillcolor="white", shape="box", style="dashed", color="red")
                 l3 = Node("L3", label="Orange: HTTP Communication", fillcolor="white", shape="box")

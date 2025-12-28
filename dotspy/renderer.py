@@ -66,6 +66,12 @@ def render_subgraph(subgraph: "Subgraph", is_digraph: bool, indent: str = "  ") 
     for node in subgraph._nodes.values():
         lines.append(render_node(node, inner_indent))
     
+    # Nested Subgraphs
+    # Recursively render nested subgraphs
+    if hasattr(subgraph, '_subgraphs'):
+        for child_subgraph in subgraph._subgraphs:
+            lines.append(render_subgraph(child_subgraph, is_digraph, inner_indent))
+
     # Edges (if subgraph tracks them - currently Subgraph doesn't have add_edge, but Graph does)
     # Graph.py Subgraph class has _edges list.
     for edge in subgraph._edges:

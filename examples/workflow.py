@@ -18,7 +18,7 @@ def generate_graph():
             
             # Phase 1: Rollout & Data Collection
             with Subgraph("cluster_rollout", label="Phase 1: Rollout & Data Collection", 
-                        style=GraphStyle(style="filled"), fillcolor="#fff9c4") as s1:
+                        styles=GraphStyle(style="filled"), fillcolor="#fff9c4") as s1:
                 gen = Node("gen", label="Generate Sequences\n(ActorRolloutWG.generate_sequences)", fillcolor="#fff59d")
                 compute_log_probs = Node("compute_log_probs", label="Compute Old Log Probs\n(ActorWG)", fillcolor="#fff59d")
                 compute_ref = Node("compute_ref", label="Compute Ref Log Probs\n(RefPolicyWG)", fillcolor="#fff59d")
@@ -32,13 +32,13 @@ def generate_graph():
                 
             # Phase 2: Driver Calculation
             with Subgraph("cluster_driver_calc", label="Phase 2: Driver Calculation", 
-                        style=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s2:
+                        styles=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s2:
                 calc_adv = Node("calc_adv", label="Compute Advantages (GAE)\n(Driver)", fillcolor="#b3e5fc")
                 make_batch = Node("make_batch", label="Construct Training Batch\n(Driver)", fillcolor="#b3e5fc")
                 
             # Phase 3: Model Updates
             with Subgraph("cluster_update", label="Phase 3: Model Updates", 
-                        style=GraphStyle(style="filled"), fillcolor="#ffccbc") as s3:
+                        styles=GraphStyle(style="filled"), fillcolor="#ffccbc") as s3:
                 update_actor = Node("update_actor", label="Update Actor\n(ActorWG.update_actor)", fillcolor="#ffab91")
                 update_critic = Node("update_critic", label="Update Critic\n(CriticWG.update_critic)", fillcolor="#ffab91")
                 

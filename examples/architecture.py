@@ -13,7 +13,7 @@ def generate_graph():
             
             # cluster_driver
             with Subgraph("cluster_driver", label="Driver Node (CPU/Head)", 
-                          style=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s_driver:
+                          styles=GraphStyle(style="filled"), fillcolor="#e1f5fe") as s_driver:
                 trainer = Node("Trainer", label="RayPPOTrainer\n(Controller)", shape="component", fillcolor="#b3e5fc")
                 res_manager = Node("ResourceManager", label="ResourcePoolManager")
                 
@@ -21,11 +21,11 @@ def generate_graph():
                 
             # cluster_cluster
             with Subgraph("cluster_cluster", label="Ray Cluster (GPU Nodes)", 
-                          style=GraphStyle(style="filled"), fillcolor="#f3e5f5") as s_cluster:
+                          styles=GraphStyle(style="filled"), fillcolor="#f3e5f5") as s_cluster:
                 
                 # cluster_pool1
                 with Subgraph("cluster_pool1", label="Resource Pool A (e.g. 4 GPUs)", 
-                              style=GraphStyle(style="dashed"), color="#7b1fa2") as s_pool1:
+                              styles=GraphStyle(style="dashed"), color="#7b1fa2") as s_pool1:
                     wg1 = Node("WorkerGroup1", label="ActorRolloutRef\nWorkerGroup", shape="folder", fillcolor="#e1bee7")
                     
                     with NodeStyle(shape="ellipse", fillcolor="#f8bbd0"):
@@ -53,7 +53,7 @@ def generate_graph():
 
                 # cluster_pool2
                 with Subgraph("cluster_pool2", label="Resource Pool B (e.g. 2 GPUs)", 
-                              style=GraphStyle(style="dashed"), color="#7b1fa2") as s_pool2:
+                              styles=GraphStyle(style="dashed"), color="#7b1fa2") as s_pool2:
                     wg2 = Node("WorkerGroup2", label="Critic\nWorkerGroup", shape="folder", fillcolor="#e1bee7")
                     w2_critic = Node("W2_Critic", label="Critic Model", shape="ellipse", fillcolor="#f8bbd0")
                     
@@ -61,7 +61,7 @@ def generate_graph():
                     
                 # cluster_pool3
                 with Subgraph("cluster_pool3", label="Resource Pool C (Optional)", 
-                              style=GraphStyle(style="dashed"), color="#7b1fa2") as s_pool3:
+                              styles=GraphStyle(style="dashed"), color="#7b1fa2") as s_pool3:
                     wg3 = Node("WorkerGroup3", label="RewardModel\nWorkerGroup", shape="folder", fillcolor="#e1bee7")
                     w3_rm = Node("W3_RM", label="Reward Model", shape="ellipse", fillcolor="#f8bbd0")
                     

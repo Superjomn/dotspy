@@ -45,3 +45,24 @@ def render_to_svg(dot_source: str) -> str:
     finally:
         if os.path.exists(dot_file):
             os.unlink(dot_file)
+
+def render_to_data(dot_source: str, format: str = "png") -> bytes:
+    """Render DOT source to binary data (e.g. for PNG)."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".dot", delete=False) as f:
+        f.write(dot_source)
+        dot_file = f.name
+    
+    try:
+        result = subprocess.run(
+            ["dot", f"-T{format}", dot_file],
+            check=True,
+            capture_output=True
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Graphviz failed: {e.stderr}") from e
+    except FileNotFoundError:
+         raise RuntimeError("Graphviz 'dot' executable not found. Please install Graphviz.")
+    finally:
+        if os.path.exists(dot_file):
+            os.unlink(dot_file)
