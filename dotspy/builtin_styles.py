@@ -1,5 +1,5 @@
-from .style import NodeStyle, EdgeStyle, GraphStyle
 from .constants import *
+from .style import EdgeStyle, GraphStyle, NodeStyle
 
 # Node styles
 BOX_NODE = NodeStyle(shape=BOX, style=FILLED, fillcolor=LIGHTBLUE)
@@ -16,7 +16,9 @@ PROCESS_NODE = NodeStyle(shape=BOX, style=FILLED, fillcolor=LIGHTBLUE)
 # Terminal node (start/end)
 TERMINAL_NODE = NodeStyle(shape=ELLIPSE, style=FILLED, fillcolor=LIGHTGRAY)
 # Input/output node
-IO_NODE = NodeStyle(shape="parallelogram", style=FILLED, fillcolor="lightyellow") # Use string literal if constant missing
+IO_NODE = NodeStyle(
+    shape="parallelogram", style=FILLED, fillcolor="lightyellow"
+)  # Use string literal if constant missing
 
 # Edge styles
 DASHED_EDGE = EdgeStyle(style=DASHED)

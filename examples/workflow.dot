@@ -1,20 +1,20 @@
 digraph Workflow {
     rankdir=TD;
     node [shape=rect, style=filled, fillcolor=white, fontname="Helvetica"];
-    
+
     start [label="Start Epoch", shape=oval, fillcolor="#c8e6c9"];
-    
+
     subgraph cluster_rollout {
         label = "Phase 1: Rollout & Data Collection";
         style = filled;
         fillcolor = "#fff9c4";
-        
+
         gen [label="Generate Sequences\n(ActorRolloutWG.generate_sequences)", fillcolor="#fff59d"];
         compute_log_probs [label="Compute Old Log Probs\n(ActorWG)", fillcolor="#fff59d"];
         compute_ref [label="Compute Ref Log Probs\n(RefPolicyWG)", fillcolor="#fff59d"];
         compute_values [label="Compute Values\n(CriticWG)", fillcolor="#fff59d"];
         compute_rewards [label="Compute Rewards\n(RewardModelWG / Fn)", fillcolor="#fff59d"];
-        
+
         gen -> compute_log_probs;
         gen -> compute_ref;
         gen -> compute_values;
@@ -25,7 +25,7 @@ digraph Workflow {
         label = "Phase 2: Driver Calculation";
         style = filled;
         fillcolor = "#e1f5fe";
-        
+
         calc_adv [label="Compute Advantages (GAE)\n(Driver)", fillcolor="#b3e5fc"];
         make_batch [label="Construct Training Batch\n(Driver)", fillcolor="#b3e5fc"];
     }
@@ -34,7 +34,7 @@ digraph Workflow {
         label = "Phase 3: Model Updates";
         style = filled;
         fillcolor = "#ffccbc";
-        
+
         update_actor [label="Update Actor\n(ActorWG.update_actor)", fillcolor="#ffab91"];
         update_critic [label="Update Critic\n(CriticWG.update_critic)", fillcolor="#ffab91"];
     }
@@ -42,18 +42,16 @@ digraph Workflow {
     end [label="Next Step / Finish", shape=oval, fillcolor="#c8e6c9"];
 
     start -> gen;
-    
+
     compute_log_probs -> calc_adv;
     compute_ref -> calc_adv;
     compute_values -> calc_adv;
     compute_rewards -> calc_adv;
-    
+
     calc_adv -> make_batch;
     make_batch -> update_actor;
     make_batch -> update_critic;
-    
+
     update_actor -> end;
     update_critic -> end;
 }
-
-

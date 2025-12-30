@@ -1,5 +1,7 @@
 import unittest
-from dotspy import Node, Graph, Edge, EdgeStyle
+
+from dotspy import Edge, EdgeStyle, Graph, Node
+
 
 class TestEdge(unittest.TestCase):
     def setUp(self):
@@ -50,10 +52,10 @@ class TestEdge(unittest.TestCase):
         # Call syntax works on single Edge objects (created manually)
         e = Edge(n1, n2)(color="green")
         self.assertEqual(e._attrs["color"], "green")
-        
+
         # Or via chain
-        # Note: chain doesn't support __call__ yet based on implementation, 
-        # let's check if user requested it? No, just | dict. 
+        # Note: chain doesn't support __call__ yet based on implementation,
+        # let's check if user requested it? No, just | dict.
         # But Edge itself supports it.
 
     def test_or_syntax_edge_style(self):
@@ -86,6 +88,7 @@ class TestEdge(unittest.TestCase):
         e = Edge(n1, n2)[style]
         self.assertEqual(e._attrs["penwidth"], 2)
         # Chain support not explicitly requested via [], but | is preferred.
+
 
 if __name__ == "__main__":
     unittest.main()

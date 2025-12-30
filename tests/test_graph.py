@@ -1,12 +1,14 @@
 import unittest
-from dotspy import Graph, Subgraph, Node, GraphStyle
+
+from dotspy import Graph, GraphStyle, Node, Subgraph
+
 
 class TestGraph(unittest.TestCase):
     def test_graph_context(self):
         with Graph("G") as g:
             n = Node("n")
             self.assertIn(n, g._nodes)
-            
+
     def test_subgraph(self):
         with Graph("G") as g:
             with Subgraph("sub") as s:
@@ -30,7 +32,7 @@ class TestGraph(unittest.TestCase):
                 # DOT supports nested subgraphs.
                 # This might be a limitation in current implementation, but that's okay for MVP.
                 pass
-    
+
     def test_graph_style(self):
         style = GraphStyle(rankdir="LR")
         g = Graph(styles=style)
@@ -39,14 +41,14 @@ class TestGraph(unittest.TestCase):
     def test_subgraph_cluster_name(self):
         s = Subgraph("foo", cluster=True)
         self.assertEqual(s._name, "cluster_foo")
-        
+
         s2 = Subgraph("bar", cluster=False)
         self.assertEqual(s2._name, "bar")
 
     def test_subgraph_auto_id(self):
         s = Subgraph(cluster=False)
         self.assertTrue(s.name.startswith("subgraph_"))
-        
+
     def test_subgraph_auto_id_cluster(self):
         # Default is cluster=True
         s = Subgraph()
@@ -56,6 +58,7 @@ class TestGraph(unittest.TestCase):
         s = Subgraph(cluster=False)
         self.assertFalse(s.name.startswith("cluster_"))
         self.assertTrue(s.name.startswith("subgraph_"))
+
 
 if __name__ == "__main__":
     unittest.main()

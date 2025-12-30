@@ -2,194 +2,193 @@ digraph ResourcePoolManager_TRTLLM_2Nodes {
     rankdir=TB;
     node [shape=box, style="filled", fontname="Arial"];
     compound=true;
-    
+
     // Title
     label="ResourcePoolManager: TRT-LLM Allocation\n2 Nodes, 16 GPUs Total, TP=4 (4 Replicas)";
     labelloc=t;
     fontsize=16;
     fontname="Arial Bold";
-    
+
     // ResourcePoolManager
     subgraph cluster_manager {
         label="ResourcePoolManager";
         color=blue;
         style=filled;
         fillcolor="#e3f2fd";
-        
-        RPM [label="ResourcePoolManager\n\nresource_pool_spec:\n{'global_pool': (max_colocate_count=3,\n  [8, 8])}\n\nmapping:\n{ActorRollout: 'global_pool'}", 
+
+        RPM [label="ResourcePoolManager\n\nresource_pool_spec:\n{'global_pool': (max_colocate_count=3,\n  [8, 8])}\n\nmapping:\n{ActorRollout: 'global_pool'}",
              shape=box, fillcolor="#bbdefb", style="filled,rounded"];
     }
-    
+
     // RayResourcePool
     subgraph cluster_pool {
         label="RayResourcePool ('global_pool')";
         color=darkgreen;
         style=filled;
         fillcolor="#e8f5e9";
-        
-        RRP [label="RayResourcePool\n\nprocess_on_nodes: [8, 8]\nmax_colocate_count: 3\nuse_gpu: True\ntotal_gpus: 16", 
+
+        RRP [label="RayResourcePool\n\nprocess_on_nodes: [8, 8]\nmax_colocate_count: 3\nuse_gpu: True\ntotal_gpus: 16",
              shape=box, fillcolor="#c8e6c9", style="filled,rounded"];
     }
-    
+
     // Ray Placement Groups
     subgraph cluster_placement {
         label="Ray Placement Groups (STRICT_PACK)";
         color=purple;
         style=filled;
         fillcolor="#f3e5f5";
-        
+
         PG0 [label="PlacementGroup 0\nNode: ray-node-1\n8 Bundles", fillcolor="#e1bee7", style="filled,rounded"];
         PG1 [label="PlacementGroup 1\nNode: ray-node-2\n8 Bundles", fillcolor="#e1bee7", style="filled,rounded"];
     }
-    
+
     // Physical Node 1
     subgraph cluster_node1 {
         label="Physical Node 1 (8 GPUs)";
         color=black;
         style=filled;
         fillcolor="#fff9c4";
-        
+
         subgraph cluster_node1_replica0 {
             label="Replica 0 (TP=4)";
             style=dashed;
             color=red;
-            
+
             N1_GPU0 [label="GPU 0\nBundle 0", fillcolor="#ffeb3b"];
             N1_GPU1 [label="GPU 1\nBundle 1", fillcolor="#ffeb3b"];
             N1_GPU2 [label="GPU 2\nBundle 2", fillcolor="#ffeb3b"];
             N1_GPU3 [label="GPU 3\nBundle 3", fillcolor="#ffeb3b"];
         }
-        
+
         subgraph cluster_node1_replica1 {
             label="Replica 1 (TP=4)";
             style=dashed;
             color=red;
-            
+
             N1_GPU4 [label="GPU 4\nBundle 4", fillcolor="#ffeb3b"];
             N1_GPU5 [label="GPU 5\nBundle 5", fillcolor="#ffeb3b"];
             N1_GPU6 [label="GPU 6\nBundle 6", fillcolor="#ffeb3b"];
             N1_GPU7 [label="GPU 7\nBundle 7", fillcolor="#ffeb3b"];
         }
     }
-    
+
     // Physical Node 2
     subgraph cluster_node2 {
         label="Physical Node 2 (8 GPUs)";
         color=black;
         style=filled;
         fillcolor="#e8f4f8";
-        
+
         subgraph cluster_node2_replica2 {
             label="Replica 2 (TP=4)";
             style=dashed;
             color=red;
-            
+
             N2_GPU0 [label="GPU 8\nBundle 0", fillcolor="#b3e5fc"];
             N2_GPU1 [label="GPU 9\nBundle 1", fillcolor="#b3e5fc"];
             N2_GPU2 [label="GPU 10\nBundle 2", fillcolor="#b3e5fc"];
             N2_GPU3 [label="GPU 11\nBundle 3", fillcolor="#b3e5fc"];
         }
-        
+
         subgraph cluster_node2_replica3 {
             label="Replica 3 (TP=4)";
             style=dashed;
             color=red;
-            
+
             N2_GPU4 [label="GPU 12\nBundle 4", fillcolor="#b3e5fc"];
             N2_GPU5 [label="GPU 13\nBundle 5", fillcolor="#b3e5fc"];
             N2_GPU6 [label="GPU 14\nBundle 6", fillcolor="#b3e5fc"];
             N2_GPU7 [label="GPU 15\nBundle 7", fillcolor="#b3e5fc"];
         }
     }
-    
+
     // Workers & Servers Node 1
     subgraph cluster_workers_node1 {
         label="Node 1: Workers & TRT-LLM Servers";
         color=darkblue;
         style=filled;
         fillcolor="#e1f5fe";
-        
+
         N1_Workers [label="ActorRolloutRefWorkers\nRank 0-7\n(8 Training Engines)", fillcolor="#81d4fa", shape=component];
         N1_Server0 [label="TRTLLMHttpServer\nReplica 0\n(Bundles 0-3)", fillcolor="#4fc3f7", shape=box3d];
         N1_Server1 [label="TRTLLMHttpServer\nReplica 1\n(Bundles 4-7)", fillcolor="#4fc3f7", shape=box3d];
         N1_Adapter [label="TRTLLMAsyncRollout\nClients (Rank 0-7)", fillcolor="#ffe0b2", shape=note];
     }
-    
+
     // Workers & Servers Node 2
     subgraph cluster_workers_node2 {
         label="Node 2: Workers & TRT-LLM Servers";
         color=darkblue;
         style=filled;
         fillcolor="#f1f8e9";
-        
+
         N2_Workers [label="ActorRolloutRefWorkers\nRank 8-15\n(8 Training Engines)", fillcolor="#aed581", shape=component];
         N2_Server2 [label="TRTLLMHttpServer\nReplica 2\n(Bundles 0-3)", fillcolor="#9ccc65", shape=box3d];
         N2_Server3 [label="TRTLLMHttpServer\nReplica 3\n(Bundles 4-7)", fillcolor="#9ccc65", shape=box3d];
         N2_Adapter [label="TRTLLMAsyncRollout\nClients (Rank 8-15)", fillcolor="#ffe0b2", shape=note];
     }
-    
+
     // Inter-node Communication
     NCCL [label="NCCL All-Reduce\n(Cross-node gradient sync)", shape=cylinder, fillcolor="#fff59d", style="filled"];
-    
+
     // Connections - Management Flow
     RPM -> RRP [label="creates", color=blue, penwidth=2];
     RRP -> PG0 [label="creates PG", color=darkgreen, penwidth=2];
     RRP -> PG1 [label="creates PG", color=darkgreen, penwidth=2];
-    
+
     // Placement Group to Nodes
     PG0 -> N1_GPU0 [label="binds", color=purple, style=dashed, lhead=cluster_node1];
     PG1 -> N2_GPU0 [label="binds", color=purple, style=dashed, lhead=cluster_node2];
-    
+
     // Workers to GPUs (Node 1)
     N1_GPU0 -> N1_Workers [label="schedules", color=black, style=dotted, ltail=cluster_node1];
     N1_GPU0 -> N1_Server0 [label="uses", color=red, style=bold, penwidth=2, ltail=cluster_node1_replica0];
     N1_GPU4 -> N1_Server1 [label="uses", color=red, style=bold, penwidth=2, ltail=cluster_node1_replica1];
-    
+
     // Workers to GPUs (Node 2)
     N2_GPU0 -> N2_Workers [label="schedules", color=black, style=dotted, ltail=cluster_node2];
     N2_GPU0 -> N2_Server2 [label="uses", color=red, style=bold, penwidth=2, ltail=cluster_node2_replica2];
     N2_GPU4 -> N2_Server3 [label="uses", color=red, style=bold, penwidth=2, ltail=cluster_node2_replica3];
-    
+
     // Communication flows
     N1_Workers -> N1_Adapter [label="embeds", color=darkgreen, dir=none, penwidth=2];
     N2_Workers -> N2_Adapter [label="embeds", color=darkgreen, dir=none, penwidth=2];
-    
+
     N1_Adapter -> N1_Server0 [label="HTTP", color=orange, penwidth=2];
     N1_Adapter -> N1_Server1 [label="HTTP", color=orange, penwidth=2];
     N2_Adapter -> N2_Server2 [label="HTTP", color=orange, penwidth=2];
     N2_Adapter -> N2_Server3 [label="HTTP", color=orange, penwidth=2];
-    
+
     // Weight sync
     N1_Workers -> N1_Server0 [label="CUDA IPC\nWeight Sync", color=green, penwidth=2, style=dashed];
     N1_Workers -> N1_Server1 [label="CUDA IPC\nWeight Sync", color=green, penwidth=2, style=dashed];
     N2_Workers -> N2_Server2 [label="CUDA IPC\nWeight Sync", color=green, penwidth=2, style=dashed];
     N2_Workers -> N2_Server3 [label="CUDA IPC\nWeight Sync", color=green, penwidth=2, style=dashed];
-    
+
     // Cross-node communication
     N1_Workers -> NCCL [color=brown, penwidth=2, style=bold];
     N2_Workers -> NCCL [color=brown, penwidth=2, style=bold];
-    
+
     // Legend
     subgraph cluster_legend {
         label="Legend";
         color=gray;
         style=filled;
         fillcolor=white;
-        
+
         L1 [label="Blue: Resource Management", fillcolor="#e3f2fd", shape=box];
         L2 [label="Red: TP Group (4 GPUs)", fillcolor=white, shape=box, style=dashed, color=red];
         L3 [label="Orange: HTTP Requests", fillcolor=white, shape=box];
         L4 [label="Green: Weight Sync (CUDA IPC)", fillcolor=white, shape=box];
         L5 [label="Brown: NCCL Cross-Node", fillcolor=white, shape=box];
-        
+
         L1 -> L2 [style=invis];
         L2 -> L3 [style=invis];
         L3 -> L4 [style=invis];
         L4 -> L5 [style=invis];
     }
-    
+
     // Layout hints
     {rank=same; PG0; PG1;}
     {rank=same; N1_Server0; N1_Server1; N2_Server2; N2_Server3;}
 }
-

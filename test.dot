@@ -1,0 +1,4 @@
+digraph G {
+  node [shape=plaintext];
+  a [label=<<FONT POINT-SIZE="20"><B>A Table</B></FONT><BR/><TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TD><B>Header 1</B></TD><TD><B>Header 2</B></TD><TR><TD>Cell 1</TD><TD>Cell 2</TD></TR></TABLE>>];
+}

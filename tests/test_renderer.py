@@ -1,10 +1,12 @@
 import unittest
-from dotspy import Graph, Node, Edge, Subgraph, renderer
+
+from dotspy import Edge, Graph, Node, renderer
+
 
 class TestRenderer(unittest.TestCase):
     def test_escape_string(self):
         self.assertEqual(renderer.escape_string('foo"bar'), 'foo\\"bar')
-        self.assertEqual(renderer.escape_string('foo\\bar'), 'foo\\\\bar')
+        self.assertEqual(renderer.escape_string("foo\\bar"), "foo\\\\bar")
 
     def test_format_attrs(self):
         attrs = {"label": 'foo"bar', "color": "red", "weight": 1}
@@ -39,11 +41,12 @@ class TestRenderer(unittest.TestCase):
             n1 = Node("n1")
             n2 = Node("n2")
             n1 >> n2
-        
+
         dot = g.to_dot()
         self.assertIn('digraph "G" {', dot)
         self.assertIn('"n1" -> "n2"', dot)
-        self.assertIn('}', dot)
+        self.assertIn("}", dot)
+
 
 if __name__ == "__main__":
     unittest.main()

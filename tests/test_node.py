@@ -1,5 +1,7 @@
 import unittest
-from dotspy import Node, Graph, NodeStyle
+
+from dotspy import Graph, Node, NodeStyle
+
 
 class TestNode(unittest.TestCase):
     def setUp(self):
@@ -37,7 +39,7 @@ class TestNode(unittest.TestCase):
         with style:
             n = Node("test")
         self.assertEqual(n.attrs["fontname"], "Arial")
-        
+
         n2 = Node("test2")
         self.assertNotIn("fontname", n2.attrs)
 
@@ -53,6 +55,7 @@ class TestNode(unittest.TestCase):
         # style2 should take precedence over style1 in list
         n = Node("test_prec", styles=[style1, style2])
         self.assertEqual(n.attrs["shape"], "circle")
+
 
 if __name__ == "__main__":
     unittest.main()

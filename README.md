@@ -28,9 +28,9 @@ from dotspy import Graph, Node, LR_GRAPH, BOX_NODE
 with Graph("my_graph", style=LR_GRAPH) as g:
     start = Node("start", style=BOX_NODE, label="Start Here")
     end = Node("end", shape="circle", color="red")
-    
+
     start >> end
-    
+
     print(g.to_dot())
     # g.render("output.png")
 ```
@@ -48,13 +48,13 @@ with Graph() as g:
     with my_node_style:
         a = Node("A")
         b = Node("B")
-    
+
     # Override with specific style
     c = Node("C", nstyle=error_style)
-    
+
     # Edges with styles
     (a >> b).style(color=BLUE)
-    
+
     # Using | operator with dict
     b >> c | {"style": BOLD, "color": RED}
 
@@ -72,13 +72,13 @@ from dotspy import Graph, Subgraph, TB_GRAPH
 with Graph(style=TB_GRAPH) as g:
     start = Node("Start")
     end = Node("End")
-    
+
     with Subgraph("cluster_process", label="Main Process", bgcolor="lightgrey") as sub:
         step1 = Node("Step 1")
         step2 = Node("Step 2")
-        
+
         step1 >> step2
-    
+
     start >> step1
     step2 >> end
 

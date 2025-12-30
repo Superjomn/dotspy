@@ -1,9 +1,10 @@
-from typing import Any, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
+    from .edge import Edge
     from .graph import Graph, Subgraph
     from .node import Node
-    from .edge import Edge
+
 
 def escape_string(s: str) -> str:
     """Escape special characters in DOT strings."""
@@ -11,6 +12,7 @@ def escape_string(s: str) -> str:
     s = s.replace("\\", "\\\\")
     s = s.replace('"', '\\"')
     return s
+
 
 def format_attrs(attrs: Dict[str, Any]) -> str:
     """Format attributes as DOT attribute string."""
@@ -24,13 +26,14 @@ def format_attrs(attrs: Dict[str, Any]) -> str:
             # Check if value is an HTML string (starts with < and ends with >) - simplistic check
             # DOT allows HTML-like labels.
             if value.startswith("<") and value.endswith(">"):
-                pass # Don't quote HTML labels
+                pass  # Don't quote HTML labels
             else:
                 value = f'"{escape_string(value)}"'
         else:
-             value = f'"{escape_string(str(value))}"'
+            value = f'"{escape_string(str(value))}"'
         parts.append(f"{key}={value}")
     return f"[{', '.join(parts)}]"
+
 
 def render_node(node: "Node", indent: str = "  ") -> str:
     """Render a node to DOT format."""
@@ -38,6 +41,7 @@ def render_node(node: "Node", indent: str = "  ") -> str:
     if attrs_str:
         return f'{indent}"{node.name}" {attrs_str};'
     return f'{indent}"{node.name}";'
+
 
 def render_edge(edge: "Edge", is_digraph: bool, indent: str = "  ") -> str:
     """Render an edge to DOT format."""
@@ -47,28 +51,29 @@ def render_edge(edge: "Edge", is_digraph: bool, indent: str = "  ") -> str:
         return f'{indent}"{edge.source.name}" {arrow} "{edge.target.name}" {attrs_str};'
     return f'{indent}"{edge.source.name}" {arrow} "{edge.target.name}";'
 
+
 def render_subgraph(subgraph: "Subgraph", is_digraph: bool, indent: str = "  ") -> str:
     """Render a subgraph to DOT format."""
     lines = []
     lines.append(f'{indent}subgraph "{subgraph._name}" {{')
-    
+
     # Subgraph attributes
     inner_indent = indent + "  "
     for key, value in subgraph._attrs.items():
         if isinstance(value, str):
-             if not (value.startswith("<") and value.endswith(">")):
+            if not (value.startswith("<") and value.endswith(">")):
                 value = f'"{escape_string(value)}"'
         else:
-             value = f'"{escape_string(str(value))}"'
+            value = f'"{escape_string(str(value))}"'
         lines.append(f"{inner_indent}{key}={value};")
-    
+
     # Nodes
     for node in subgraph._nodes.values():
         lines.append(render_node(node, inner_indent))
-    
+
     # Nested Subgraphs
     # Recursively render nested subgraphs
-    if hasattr(subgraph, '_subgraphs'):
+    if hasattr(subgraph, "_subgraphs"):
         for child_subgraph in subgraph._subgraphs:
             lines.append(render_subgraph(child_subgraph, is_digraph, inner_indent))
 
@@ -76,38 +81,39 @@ def render_subgraph(subgraph: "Subgraph", is_digraph: bool, indent: str = "  ") 
     # Graph.py Subgraph class has _edges list.
     for edge in subgraph._edges:
         lines.append(render_edge(edge, is_digraph, inner_indent))
-    
+
     lines.append(f"{indent}}}")
     return "\n".join(lines)
+
 
 def render_graph(graph: "Graph") -> str:
     """Render a complete graph to DOT format."""
     is_digraph = graph.graph_type == "digraph"
     lines = []
-    
+
     # Graph header
     lines.append(f'{graph.graph_type} "{graph.name}" {{')
-    
+
     # Graph attributes
     for key, value in graph._attrs.items():
         if isinstance(value, str):
-             if not (value.startswith("<") and value.endswith(">")):
+            if not (value.startswith("<") and value.endswith(">")):
                 value = f'"{escape_string(value)}"'
         else:
-             value = f'"{escape_string(str(value))}"'
+            value = f'"{escape_string(str(value))}"'
         lines.append(f"  {key}={value};")
-    
+
     # Subgraphs
     for subgraph in graph._subgraphs:
         lines.append(render_subgraph(subgraph, is_digraph))
-    
+
     # Top-level nodes
     for node in graph._nodes:
         lines.append(render_node(node))
-    
+
     # Top-level edges
     for edge in graph._edges:
         lines.append(render_edge(edge, is_digraph))
-    
+
     lines.append("}")
     return "\n".join(lines)

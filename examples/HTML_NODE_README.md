@@ -12,17 +12,17 @@ import dotspy as ds
 with ds.Graph() as g:
     # Simple formatting
     n1 = ds.HTMLNode(markdown="**Bold** and *italic*")
-    
+
     # Headers with different sizes
     n2 = ds.HTMLNode(markdown="# Main Title")
-    
+
     # Lists
     n3 = ds.HTMLNode(markdown="""
 - Item 1
 - Item 2
 - Item 3
 """)
-    
+
     # Tables
     n4 = ds.HTMLNode(markdown="""
 | Header 1 | Header 2 |
@@ -70,10 +70,10 @@ import dotspy as ds
 with ds.Graph() as g:
     # Simple HTML
     n1 = ds.HTMLNode(html="<B>Bold</B> and <I>Italic</I>")
-    
+
     # Custom fonts
     n2 = ds.HTMLNode(html='<FONT POINT-SIZE="20" COLOR="red">Large Red Text</FONT>')
-    
+
     # Complex tables
     n3 = ds.HTMLNode(html="""<TABLE BORDER="1">
   <TR><TD><B>Header</B></TD></TR>
@@ -150,4 +150,3 @@ class HTMLNode(Node):
 
 - `ValueError`: If both `markdown` and `html` are provided, or neither is provided
 - `ImportError`: If `markdown` is provided but `mistune` is not installed
-

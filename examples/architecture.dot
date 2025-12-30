@@ -7,10 +7,10 @@ digraph Architecture {
         label = "Driver Node (CPU/Head)";
         style = filled;
         fillcolor = "#e1f5fe";
-        
+
         Trainer [label="RayPPOTrainer\n(Controller)", shape=component, fillcolor="#b3e5fc"];
         ResourceManager [label="ResourcePoolManager"];
-        
+
         Trainer -> ResourceManager [label="allocates"];
     }
 
@@ -23,18 +23,18 @@ digraph Architecture {
             label = "Resource Pool A (e.g. 4 GPUs)";
             style = dashed;
             color = "#7b1fa2";
-            
+
             WorkerGroup1 [label="ActorRolloutRef\nWorkerGroup", shape=folder, fillcolor="#e1bee7"];
-            
+
             node [shape=ellipse, fillcolor="#f8bbd0"];
             W1_Actor [label="Actor\n(FSDP/Megatron)"];
             W1_Rollout [label="Rollout\n(vLLM/SGLang)"];
             W1_Ref [label="RefPolicy"];
-            
+
             WorkerGroup1 -> W1_Actor;
             WorkerGroup1 -> W1_Rollout;
             WorkerGroup1 -> W1_Ref;
-            
+
             {rank=same; W1_Actor; W1_Rollout; W1_Ref}
         }
 
@@ -42,10 +42,10 @@ digraph Architecture {
             label = "Resource Pool B (e.g. 2 GPUs)";
             style = dashed;
             color = "#7b1fa2";
-            
+
             WorkerGroup2 [label="Critic\nWorkerGroup", shape=folder, fillcolor="#e1bee7"];
             W2_Critic [label="Critic Model", shape=ellipse, fillcolor="#f8bbd0"];
-            
+
             WorkerGroup2 -> W2_Critic;
         }
 
@@ -53,10 +53,10 @@ digraph Architecture {
             label = "Resource Pool C (Optional)";
             style = dashed;
             color = "#7b1fa2";
-            
+
             WorkerGroup3 [label="RewardModel\nWorkerGroup", shape=folder, fillcolor="#e1bee7"];
             W3_RM [label="Reward Model", shape=ellipse, fillcolor="#f8bbd0"];
-            
+
             WorkerGroup3 -> W3_RM;
         }
     }
@@ -72,5 +72,3 @@ digraph Architecture {
     W3_RM -> Trainer [label="Scores"];
     Trainer -> W1_Actor [label="Training Batch"];
 }
-
-

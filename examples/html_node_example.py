@@ -14,7 +14,9 @@ print("-" * 50)
 with ds.Graph(label="Raw HTML Example", rankdir=ds.LR) as g:
     n1 = ds.HTMLNode(name="raw1", html="<B>Bold</B> text")
     n2 = ds.HTMLNode(name="raw2", html="<I>Italic</I> text")
-    n3 = ds.HTMLNode(name="raw3", html='<FONT POINT-SIZE="16" COLOR="red">Large Red</FONT>')
+    n3 = ds.HTMLNode(
+        name="raw3", html='<FONT POINT-SIZE="16" COLOR="red">Large Red</FONT>'
+    )
     n1 >> n2 >> n3
 
 print(g.to_dot())
@@ -52,7 +54,7 @@ with ds.Graph(label="Table Example") as g:
   <TR><TD><B>Header 1</B></TD><TD><B>Header 2</B></TD></TR>
   <TR><TD>Data 1</TD><TD>Data 2</TD></TR>
 </TABLE>"""
-    
+
     n1 = ds.HTMLNode(name="table", html=table_html)
     n2 = ds.Node("normal", label="Regular Node")
     n1 >> n2
@@ -69,7 +71,7 @@ with ds.Graph(label="List Example") as g:
 - Item 1
 - Item 2
 - Item 3"""
-    
+
     n1 = ds.HTMLNode(markdown=markdown_list)
 
 print(g.to_dot())
@@ -82,7 +84,7 @@ with ds.Graph(label="Mixed Example") as g:
     mixed = """**Important:** This is *really* important
 
 See documentation"""
-    
+
     n1 = ds.HTMLNode(markdown=mixed)
     n2 = ds.Node("action", label="Take Action")
     n1 >> n2
@@ -96,9 +98,9 @@ print("-" * 50)
 with ds.Graph(label="Styled HTML Example") as g:
     style = ds.NodeStyle(shape="box", fillcolor="lightblue", style="filled")
     n1 = ds.HTMLNode(markdown="**Styled** Node", styles=style)
-    n2 = ds.HTMLNode(html="<I>Another</I> <B>Styled</B> Node", 
-                     styles=style, color="red", penwidth=2)
+    n2 = ds.HTMLNode(
+        html="<I>Another</I> <B>Styled</B> Node", styles=style, color="red", penwidth=2
+    )
     n1 >> n2
 
 print(g.to_dot())
-
