@@ -96,3 +96,62 @@ class Node(NodeAttributes):
         # Return merged dict of model fields and extras
         # Exclude 'name' from attributes dict as it is structural and handled separately by renderer
         return self.model_dump(exclude_none=True, by_alias=True, exclude={'name'})
+
+
+class HTMLNode(Node):
+    """
+    A Node subclass for creating nodes with HTML-like labels.
+    
+    Supports two modes:
+    1. Markdown mode: Provide markdown text that gets converted to DOT HTML
+    2. Raw HTML mode: Provide raw DOT-compatible HTML directly
+    
+    Examples:
+        # Using markdown
+        node1 = HTMLNode(markdown="**Bold** and *italic* text")
+        
+        # Using raw HTML
+        node2 = HTMLNode(html="<B>Bold</B> and <I>italic</I>")
+    """
+    
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        markdown: Optional[str] = None,
+        html: Optional[str] = None,
+        styles: Optional[Union[NodeStyle, List[NodeStyle]]] = None,
+        **attrs
+    ):
+        """
+        Initialize an HTMLNode.
+        
+        Args:
+            name: Unique identifier for the node (auto-generated if not provided)
+            markdown: Markdown text to convert to DOT HTML (mutually exclusive with html)
+            html: Raw DOT-compatible HTML (mutually exclusive with markdown)
+            styles: NodeStyle or list of NodeStyles to apply
+            **attrs: Additional node attributes
+            
+        Raises:
+            ValueError: If both markdown and html are provided, or neither is provided
+            ImportError: If markdown is provided but mistune is not installed
+        """
+        # Validate inputs - use 'is not None' to allow empty strings
+        if markdown is not None and html is not None:
+            raise ValueError("Specify either 'markdown' or 'html', not both")
+        if markdown is None and html is None:
+            raise ValueError("Must specify either 'markdown' or 'html'")
+        
+        # Convert markdown to HTML if needed
+        if markdown is not None:
+            from .html_utils import markdown_to_dot_html
+            html_content = markdown_to_dot_html(markdown)
+        else:
+            html_content = html
+        
+        # DOT HTML labels must be wrapped in < > instead of quotes
+        # The renderer will detect this (startswith < and endswith >) and not quote it
+        label = f'<{html_content}>'
+        
+        # Initialize parent Node with the HTML label
+        super().__init__(name=name, styles=styles, label=label, **attrs)

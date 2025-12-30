@@ -1,7 +1,7 @@
 """dotspy - A Pythonic wrapper for Graphviz DOT language."""
 
 from .constants import *
-from .node import Node
+from .node import Node, HTMLNode
 from .edge import Edge
 from .graph import Graph, Subgraph
 from .style import NodeStyle, EdgeStyle, GraphStyle
@@ -18,7 +18,7 @@ from .utils import render_to_file, render_to_svg
 __version__ = "0.1.0"
 __all__ = [
     # Core classes
-    "Node", "Edge", "Graph", "Subgraph",
+    "Node", "HTMLNode", "Edge", "Graph", "Subgraph", 
     # Style classes
     "NodeStyle", "EdgeStyle", "GraphStyle",
     # Singleton functions

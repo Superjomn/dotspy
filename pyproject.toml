@@ -8,9 +8,6 @@ version = "0.1.0"
 description = "A Pythonic wrapper for Graphviz DOT language"
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = [
-    "pydantic>=2.0",
-]
 license = {text = "MIT"}
 authors = [
     {name = "Chunwei Y", email = "your@email.com"}
