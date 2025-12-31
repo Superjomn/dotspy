@@ -14,9 +14,10 @@ from .mindmap import (
     BranchEdge,
     BranchNode,
     LeafNode,
+    MindNode,
+    NoteEdge,
+    NoteNode,
     TopicNode,
-    mindmap,
-    radial_mindmap,
 )
 from .uml import (
     UML_GRAPH,
@@ -49,12 +50,13 @@ __all__ = [
     "DependencyEdge",
     "UML_GRAPH",
     # Mind map components
-    "TopicNode",
-    "BranchNode",
-    "LeafNode",
+    "MindNode",
+    "NoteNode",
+    "NoteEdge",
+    "TopicNode",  # Backward compatibility alias
+    "BranchNode",  # Backward compatibility alias
+    "LeafNode",  # Backward compatibility alias
     "BranchEdge",
-    "mindmap",
-    "radial_mindmap",
     "MINDMAP_GRAPH",
     "RADIAL_MINDMAP_GRAPH",
 ]

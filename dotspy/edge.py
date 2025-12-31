@@ -36,7 +36,17 @@ class Edge(EdgeAttributes):
 
         style_attrs = merge_styles(styles)
 
-        combined_attrs = {**context_attrs, **style_attrs, **attrs}
+        # Auto-apply NoteEdge styling if target is a NoteNode
+        if hasattr(target, "_is_note_node") and target._is_note_node:
+            # Import here to avoid circular import
+            from .diagrams.mindmap import NoteEdge
+
+            note_edge = NoteEdge()
+            note_style = note_edge.to_style().to_dict()
+            # NoteEdge styling takes precedence over context but not explicit styles
+            combined_attrs = {**context_attrs, **note_style, **style_attrs, **attrs}
+        else:
+            combined_attrs = {**context_attrs, **style_attrs, **attrs}
 
         super().__init__(source=source, target=target, **combined_attrs)
 
@@ -86,8 +96,10 @@ class Edge(EdgeAttributes):
         # This method is renamed from style() to set_styles() to avoid conflict with 'style' attribute field.
         return self(styles=styles, **attrs)
 
-    def __rshift__(self, other: "Node") -> "EdgeChain":
-        """Support edge >> node syntax (chaining)."""
+    def __rshift__(self, other: Union["Node", tuple]) -> "EdgeChain":
+        """Support edge >> node syntax (chaining) and tuple fan-out."""
+        if isinstance(other, tuple):
+            return EdgeChain([self] + [Edge(self.target, node) for node in other])
         return EdgeChain([self, Edge(self.target, other)])
 
     @property
@@ -111,11 +123,16 @@ class EdgeChain:
     def __init__(self, edges: List[Edge]):
         self.edges = edges
 
-    def __rshift__(self, other: "Node") -> "EdgeChain":
-        """Support chain >> node syntax."""
+    def __rshift__(self, other: Union["Node", tuple]) -> "EdgeChain":
+        """Support chain >> node syntax and tuple fan-out."""
         last_edge = self.edges[-1]
-        new_edge = Edge(last_edge.target, other)
-        self.edges.append(new_edge)
+        if isinstance(other, tuple):
+            # Fan-out: create edges from last target to all nodes in tuple
+            for node in other:
+                self.edges.append(Edge(last_edge.target, node))
+        else:
+            new_edge = Edge(last_edge.target, other)
+            self.edges.append(new_edge)
         return self
 
     def __or__(

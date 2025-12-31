@@ -93,10 +93,13 @@ class Node(NodeAttributes):
             if graph:
                 graph._add_node(self)
 
-    def __rshift__(self, other: "Node") -> "EdgeBuilder":
-        """Support node1 >> node2 syntax."""
+    def __rshift__(self, other: Union["Node", tuple]) -> "EdgeBuilder":
+        """Support node1 >> node2 syntax and tuple fan-out."""
         from .edge import Edge, EdgeChain
 
+        # Support tuple fan-out: node >> (node1, node2, node3)
+        if isinstance(other, tuple):
+            return EdgeChain([Edge(self, node) for node in other])
         return EdgeChain([Edge(self, other)])
 
     @property

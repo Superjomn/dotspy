@@ -45,9 +45,10 @@ from .diagrams import (
     InheritanceEdge,
     InterfaceNode,
     LeafNode,
+    MindNode,
+    NoteEdge,
+    NoteNode,
     TopicNode,
-    mindmap,
-    radial_mindmap,
 )
 from .edge import Edge
 from .graph import Graph, Subgraph
@@ -158,12 +159,13 @@ __all__ = [
     "AssociationEdge",
     "DependencyEdge",
     "UML_GRAPH",
-    "TopicNode",
-    "BranchNode",
-    "LeafNode",
+    "MindNode",
+    "NoteNode",
+    "NoteEdge",
+    "TopicNode",  # Backward compatibility
+    "BranchNode",  # Backward compatibility
+    "LeafNode",  # Backward compatibility
     "BranchEdge",
     "MINDMAP_GRAPH",
     "RADIAL_MINDMAP_GRAPH",
-    "mindmap",
-    "radial_mindmap",
 ]

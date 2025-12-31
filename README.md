@@ -165,46 +165,49 @@ with Graph("uml", styles=UML_GRAPH) as g:
 
 ### Mind Maps
 
-Create mind maps with hierarchical structure:
+Create mind maps with an intuitive object-oriented API:
 
 ```python
 from dotspy import Graph
-from dotspy.diagrams import mindmap, MINDMAP_GRAPH
+import dotspy.diagrams.mindmap as mm
 
-with Graph("ideas", styles=MINDMAP_GRAPH) as g:
-    # Use the helper function for quick creation
-    mindmap({
-        "Project Ideas": {
-            "Frontend": ["React", "Vue", "Angular"],
-            "Backend": {
-                "Python": ["Django", "FastAPI"],
-                "Go": ["Gin", "Echo"]
-            },
-            "Database": ["PostgreSQL", "MongoDB"]
-        }
-    })
+with Graph("ideas", styles=mm.MINDMAP_GRAPH) as g:
+    project = mm.MindNode("Project Ideas")
+    frontend = mm.MindNode("Frontend")
+    backend = mm.MindNode("Backend")
+    database = mm.MindNode("Database")
+
+    # Use tuple fan-out to create multiple edges at once
+    project >> (frontend, backend, database) | mm.BranchEdge()
+
+    # Chain and fan-out in one expression
+    frontend >> (mm.MindNode("React"), mm.MindNode("Vue"), mm.MindNode("Angular"))
+    backend >> (mm.MindNode("Django"), mm.MindNode("FastAPI"))
+    database >> (mm.MindNode("PostgreSQL"), mm.MindNode("MongoDB"))
+
+    # Add notes/annotations
+    note = mm.NoteNode("Focus on TypeScript")
+    frontend >> note  # Automatically applies NoteEdge styling
 
     g.render("mindmap.png")
 ```
 
-Or build manually with explicit control:
+Apply preset styles for visual hierarchy:
 
 ```python
-from dotspy.diagrams import TopicNode, BranchNode, LeafNode, BranchEdge
+from dotspy.diagrams import MindNode, TOPIC_STYLE, BRANCH_STYLE, LEAF_STYLE
 
-root = TopicNode("Central Idea")
-branch = BranchNode("Main Topic")
-leaf = LeafNode("Detail")
-
-root >> branch | BranchEdge()
-branch >> leaf | BranchEdge()
+# Use preset styles to differentiate node levels
+root = MindNode("Central Idea", styles=TOPIC_STYLE)
+branch = MindNode("Main Topic", styles=BRANCH_STYLE)
+leaf = MindNode("Detail", styles=LEAF_STYLE)
 ```
 
 **Available Mind Map Components:**
-- Nodes: `TopicNode`, `BranchNode`, `LeafNode`
-- Edges: `BranchEdge`
+- Nodes: `MindNode`, `NoteNode` (backward compatible: `TopicNode`, `BranchNode`, `LeafNode`)
+- Edges: `BranchEdge`, `NoteEdge`
 - Styles: `MINDMAP_GRAPH`, `RADIAL_MINDMAP_GRAPH`
-- Helpers: `mindmap()`, `radial_mindmap()`
+- Style Presets: `TOPIC_STYLE`, `BRANCH_STYLE`, `LEAF_STYLE`
 
 ## More Examples
 
