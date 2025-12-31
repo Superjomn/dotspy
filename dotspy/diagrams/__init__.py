@@ -1,0 +1,60 @@
+"""
+Diagrams module for dotspy.
+
+Provides specialized node and edge types for common diagram scenarios:
+- UML class diagrams
+- Mind maps
+- And more to come...
+"""
+
+from .base import DiagramEdge, DiagramNode, create_table_html, escape_html
+from .mindmap import (
+    MINDMAP_GRAPH,
+    RADIAL_MINDMAP_GRAPH,
+    BranchEdge,
+    BranchNode,
+    LeafNode,
+    TopicNode,
+    mindmap,
+    radial_mindmap,
+)
+from .uml import (
+    UML_GRAPH,
+    AbstractClassNode,
+    AggregationEdge,
+    AssociationEdge,
+    ClassNode,
+    CompositionEdge,
+    DependencyEdge,
+    ImplementsEdge,
+    InheritanceEdge,
+    InterfaceNode,
+)
+
+__all__ = [
+    # Base classes
+    "DiagramNode",
+    "DiagramEdge",
+    "create_table_html",
+    "escape_html",
+    # UML components
+    "ClassNode",
+    "InterfaceNode",
+    "AbstractClassNode",
+    "InheritanceEdge",
+    "ImplementsEdge",
+    "CompositionEdge",
+    "AggregationEdge",
+    "AssociationEdge",
+    "DependencyEdge",
+    "UML_GRAPH",
+    # Mind map components
+    "TopicNode",
+    "BranchNode",
+    "LeafNode",
+    "BranchEdge",
+    "mindmap",
+    "radial_mindmap",
+    "MINDMAP_GRAPH",
+    "RADIAL_MINDMAP_GRAPH",
+]

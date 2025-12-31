@@ -25,6 +25,30 @@ from .builtin_styles import (
 )
 from .constants import *
 from .context import get_graph, set_graph
+
+# Diagram-specific components
+from .diagrams import (
+    MINDMAP_GRAPH,
+    RADIAL_MINDMAP_GRAPH,
+    UML_GRAPH,
+    AbstractClassNode,
+    AggregationEdge,
+    AssociationEdge,
+    BranchEdge,
+    BranchNode,
+    ClassNode,
+    CompositionEdge,
+    DependencyEdge,
+    DiagramEdge,
+    DiagramNode,
+    ImplementsEdge,
+    InheritanceEdge,
+    InterfaceNode,
+    LeafNode,
+    TopicNode,
+    mindmap,
+    radial_mindmap,
+)
 from .edge import Edge
 from .graph import Graph, Subgraph
 from .node import HTMLNode, Node
@@ -121,4 +145,25 @@ __all__ = [
     "TB_GRAPH",
     "COMPACT_GRAPH",
     "SPACED_GRAPH",
+    # Diagram components
+    "DiagramNode",
+    "DiagramEdge",
+    "ClassNode",
+    "InterfaceNode",
+    "AbstractClassNode",
+    "InheritanceEdge",
+    "ImplementsEdge",
+    "CompositionEdge",
+    "AggregationEdge",
+    "AssociationEdge",
+    "DependencyEdge",
+    "UML_GRAPH",
+    "TopicNode",
+    "BranchNode",
+    "LeafNode",
+    "BranchEdge",
+    "MINDMAP_GRAPH",
+    "RADIAL_MINDMAP_GRAPH",
+    "mindmap",
+    "radial_mindmap",
 ]

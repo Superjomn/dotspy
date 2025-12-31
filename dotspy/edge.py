@@ -65,6 +65,10 @@ class Edge(EdgeAttributes):
         self, styles: Union[EdgeStyle, List[EdgeStyle], Dict[str, Any]]
     ) -> "Edge":
         """Apply style: (node1 >> node2) | my_style"""
+        # Check if it's a DiagramEdge or similar object with to_style() method
+        if hasattr(styles, "to_style"):
+            styles = styles.to_style()
+
         if isinstance(styles, dict):
             self(**styles)
         else:
@@ -118,6 +122,10 @@ class EdgeChain:
         self, styles: Union[EdgeStyle, List[EdgeStyle], Dict[str, Any]]
     ) -> "EdgeChain":
         """Apply style to all edges in chain: chain | style"""
+        # Check if it's a DiagramEdge or similar object with to_style() method
+        if hasattr(styles, "to_style"):
+            styles = styles.to_style()
+
         for edge in self.edges:
             edge | styles
         return self

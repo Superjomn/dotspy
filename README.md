@@ -8,6 +8,8 @@ A Pythonic wrapper for Graphviz DOT language with CSS-like styling support.
 - **Operator Overloading**: Use `>>` for edge creation (`node1 >> node2`)
 - **Styling**: reusable style objects that can be merged and applied via context managers
 - **Built-in Constants**: Autocompletion-friendly constants for shapes, colors, and attributes
+- **Jupyter Integration**: Automatic rendering in Jupyter notebooks (SVG and PNG support)
+- **Markdown/HTML Labels**: Support for markdown and HTML-like labels in nodes
 - **Output**: Render to DOT string, file (PNG, PDF, etc.), or SVG string
 
 ## Installation
@@ -32,7 +34,7 @@ with Graph("my_graph", style=LR_GRAPH) as g:
     start >> end
 
     print(g.to_dot())
-    # g.render("output.png")
+    g.render("output.png")
 ```
 
 ### Advanced Styling
@@ -52,14 +54,11 @@ with Graph() as g:
     # Override with specific style
     c = Node("C", nstyle=error_style)
 
-    # Edges with styles
-    (a >> b).style(color=BLUE)
-
-    # Using | operator with dict
-    b >> c | {"style": BOLD, "color": RED}
+    # Using | operator with EdgeStyle
+    b >> c | EdgeStyle(style=BOLD, color=RED)
 
     # Chaining edges
-    a >> b >> c | {"color": "green", "penwidth": 2}
+    a >> b >> c | EdgeStyle(color="green", penwidth=2)
 
     g.render("styled.png")
 ```
@@ -84,6 +83,134 @@ with Graph(style=TB_GRAPH) as g:
 
     print(g.to_dot())
 ```
+
+### Jupyter Notebook Support
+
+Graphs automatically render as SVG or PNG in Jupyter notebooks:
+
+```python
+from dotspy import Graph, Node
+
+with Graph() as g:
+    Node("A") >> Node("B") >> Node("C")
+
+# Just reference the graph object to see it rendered
+g  # Displays inline in Jupyter
+```
+
+### HTML-like Labels
+
+Use `HTMLNode` for rich formatting with markdown or raw HTML:
+
+```python
+from dotspy import Graph, HTMLNode
+
+with Graph() as g:
+    # Markdown support
+    n1 = HTMLNode(markdown="**Bold** and *Italic*")
+    n2 = HTMLNode(markdown="# Header\n- Item 1\n- Item 2")
+
+    # Raw HTML for tables and complex formatting
+    n3 = HTMLNode(html="""<TABLE BORDER="1" CELLBORDER="1">
+        <TR><TD><B>Header 1</B></TD><TD><B>Header 2</B></TD></TR>
+        <TR><TD>Data 1</TD><TD>Data 2</TD></TR>
+    </TABLE>""")
+
+    n1 >> n2 >> n3
+    g.render("output.png")
+```
+
+## Diagram Scenarios
+
+The `diagrams` module provides specialized components for common diagram types:
+
+### UML Class Diagrams
+
+Create professional UML class diagrams with specialized nodes and edges:
+
+```python
+from dotspy import Graph
+from dotspy.diagrams import (
+    ClassNode, InterfaceNode, InheritanceEdge,
+    CompositionEdge, UML_GRAPH
+)
+
+with Graph("uml", styles=UML_GRAPH) as g:
+    # Define classes with attributes and methods
+    animal = ClassNode(
+        "Animal",
+        attributes=["+ name: str", "- age: int"],
+        methods=["+ speak(): void"]
+    )
+
+    dog = ClassNode(
+        "Dog",
+        methods=["+ bark(): void"]
+    )
+
+    # Interfaces
+    drawable = InterfaceNode("Drawable", methods=["+ draw(): void"])
+
+    # Relationships
+    dog >> animal | InheritanceEdge()  # Inheritance
+    dog >> drawable | ImplementsEdge()  # Interface implementation
+
+    g.render("uml.png")
+```
+
+**Available UML Components:**
+- Nodes: `ClassNode`, `InterfaceNode`, `AbstractClassNode`
+- Edges: `InheritanceEdge`, `ImplementsEdge`, `CompositionEdge`, `AggregationEdge`, `AssociationEdge`, `DependencyEdge`
+- Style: `UML_GRAPH`
+
+### Mind Maps
+
+Create mind maps with hierarchical structure:
+
+```python
+from dotspy import Graph
+from dotspy.diagrams import mindmap, MINDMAP_GRAPH
+
+with Graph("ideas", styles=MINDMAP_GRAPH) as g:
+    # Use the helper function for quick creation
+    mindmap({
+        "Project Ideas": {
+            "Frontend": ["React", "Vue", "Angular"],
+            "Backend": {
+                "Python": ["Django", "FastAPI"],
+                "Go": ["Gin", "Echo"]
+            },
+            "Database": ["PostgreSQL", "MongoDB"]
+        }
+    })
+
+    g.render("mindmap.png")
+```
+
+Or build manually with explicit control:
+
+```python
+from dotspy.diagrams import TopicNode, BranchNode, LeafNode, BranchEdge
+
+root = TopicNode("Central Idea")
+branch = BranchNode("Main Topic")
+leaf = LeafNode("Detail")
+
+root >> branch | BranchEdge()
+branch >> leaf | BranchEdge()
+```
+
+**Available Mind Map Components:**
+- Nodes: `TopicNode`, `BranchNode`, `LeafNode`
+- Edges: `BranchEdge`
+- Styles: `MINDMAP_GRAPH`, `RADIAL_MINDMAP_GRAPH`
+- Helpers: `mindmap()`, `radial_mindmap()`
+
+## More Examples
+
+See the [examples/](examples/) directory for more complex use cases, including:
+- `diagrams_example.py` - Complete UML and mind map examples
+- `quickstart.ipynb` - Jupyter notebook with interactive examples
 
 ## License
 
