@@ -89,6 +89,32 @@ class TestEdge(unittest.TestCase):
         self.assertEqual(e._attrs["penwidth"], 2)
         # Chain support not explicitly requested via [], but | is preferred.
 
+    def test_duplicate_edge_prevention(self):
+        """Test that duplicate edges are not added to the graph."""
+        n1 = Node("n1")
+        n2 = Node("n2")
+
+        # Add the same edge twice
+        n1 >> n2
+        n1 >> n2
+
+        # Only one edge should be in the graph
+        self.assertEqual(len(self.graph._edges), 1)
+
+    def test_edges_with_different_attributes_are_duplicates(self):
+        """Test that edges with same source/target are duplicates regardless of attributes."""
+        n1 = Node("n1")
+        n2 = Node("n2")
+
+        # Add edges with different attributes
+        Edge(n1, n2, color="red")
+        Edge(n1, n2, color="blue")
+
+        # Only first edge should be in the graph (duplicates based on source/target only)
+        self.assertEqual(len(self.graph._edges), 1)
+        # The first edge retains its original attributes
+        self.assertEqual(self.graph._edges[0]._attrs["color"], "red")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -30,6 +30,56 @@ UML_ABSTRACT_STYLE = NodeStyle(
 )
 
 
+def wrap_text(text: str, width: int = 60, indent: str = "&nbsp;&nbsp;") -> str:
+    """
+    Wrap text to specified width, preserving structure for UML attributes/methods.
+    Splits primarily on commas (for parameter lists) and spaces.
+    """
+    if len(text) <= width:
+        return escape_html(text)
+
+    lines = []
+    remaining = text
+
+    while len(remaining) > width:
+        # Find best split point
+        # Priority: 1. Comma (args), 2. Space, 3. Hard split
+
+        limit = width
+        split_idx = -1
+
+        # Check for comma
+        last_comma = remaining.rfind(",", 0, limit)
+        if last_comma != -1:
+            split_idx = last_comma + 1  # Include comma
+        else:
+            # Check for space
+            last_space = remaining.rfind(" ", 0, limit)
+            if last_space != -1:
+                split_idx = last_space
+
+        if split_idx == -1:
+            split_idx = limit  # Hard split
+
+        chunk = remaining[:split_idx]
+        lines.append(escape_html(chunk))
+
+        remaining = remaining[split_idx:].lstrip()
+
+    if remaining:
+        lines.append(escape_html(remaining))
+
+    # Indent all lines except the first
+    if not lines:
+        return ""
+
+    result = lines[0]
+    for line in lines[1:]:
+        result += f"<BR ALIGN='LEFT'/>{indent}{line}"
+
+    return result
+
+
 class ClassNode(HTMLNode, DiagramNode):
     """
     UML class node with compartments for attributes and methods.
@@ -54,6 +104,7 @@ class ClassNode(HTMLNode, DiagramNode):
         methods: Optional[List[str]] = None,
         stereotype: Optional[str] = None,
         styles: Optional[Union[NodeStyle, List[NodeStyle]]] = None,
+        wrap_width: int = 60,
         **attrs,
     ):
         """
@@ -65,6 +116,7 @@ class ClassNode(HTMLNode, DiagramNode):
             methods: List of method strings (e.g., "+ getName(): str")
             stereotype: Optional stereotype (e.g., "<<interface>>", "<<abstract>>")
             styles: Additional NodeStyle objects to apply
+            wrap_width: Maximum width of text before wrapping (default: 60)
             **attrs: Additional node attributes
         """
         # Build sections for the table
@@ -73,13 +125,19 @@ class ClassNode(HTMLNode, DiagramNode):
         # Attributes section
         if attributes:
             sections.append(
-                {"rows": [escape_html(attr) for attr in attributes], "align": "LEFT"}
+                {
+                    "rows": [wrap_text(attr, width=wrap_width) for attr in attributes],
+                    "align": "LEFT",
+                }
             )
 
         # Methods section
         if methods:
             sections.append(
-                {"rows": [escape_html(method) for method in methods], "align": "LEFT"}
+                {
+                    "rows": [wrap_text(method, width=wrap_width) for method in methods],
+                    "align": "LEFT",
+                }
             )
 
         # Add stereotype to title if provided
@@ -123,6 +181,7 @@ class InterfaceNode(ClassNode):
         interface_name: str,
         methods: Optional[List[str]] = None,
         styles: Optional[Union[NodeStyle, List[NodeStyle]]] = None,
+        wrap_width: int = 60,
         **attrs,
     ):
         """
@@ -132,6 +191,7 @@ class InterfaceNode(ClassNode):
             interface_name: Name of the interface
             methods: List of method strings
             styles: Additional NodeStyle objects to apply
+            wrap_width: Maximum width of text before wrapping (default: 60)
             **attrs: Additional node attributes
         """
         style_list = [UML_INTERFACE_STYLE]
@@ -147,6 +207,7 @@ class InterfaceNode(ClassNode):
             methods=methods,
             stereotype="interface",
             styles=style_list,
+            wrap_width=wrap_width,
             **attrs,
         )
 
@@ -168,6 +229,7 @@ class AbstractClassNode(ClassNode):
         attributes: Optional[List[str]] = None,
         methods: Optional[List[str]] = None,
         styles: Optional[Union[NodeStyle, List[NodeStyle]]] = None,
+        wrap_width: int = 60,
         **attrs,
     ):
         """
@@ -178,6 +240,7 @@ class AbstractClassNode(ClassNode):
             attributes: List of attribute strings
             methods: List of method strings
             styles: Additional NodeStyle objects to apply
+            wrap_width: Maximum width of text before wrapping (default: 60)
             **attrs: Additional node attributes
         """
         style_list = [UML_ABSTRACT_STYLE]
@@ -193,6 +256,7 @@ class AbstractClassNode(ClassNode):
             methods=methods,
             stereotype="abstract",
             styles=style_list,
+            wrap_width=wrap_width,
             **attrs,
         )
 

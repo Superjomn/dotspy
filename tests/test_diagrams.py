@@ -2,7 +2,7 @@
 
 import unittest
 
-from dotspy import Graph
+from dotspy import Graph, Subgraph
 from dotspy.diagrams import (
     MINDMAP_GRAPH,
     UML_GRAPH,
@@ -176,6 +176,82 @@ class TestUMLDiagrams(unittest.TestCase):
             svg = render_to_svg(g.to_dot())
             self.assertIn("<svg", svg)
             self.assertIn("Vehicle", svg)
+
+    def test_text_wrapping_long_attributes(self):
+        """Test that long attributes are wrapped to prevent wide nodes."""
+        with Graph("test_wrapping", styles=UML_GRAPH) as g:
+            node = ClassNode(
+                "ComplexClass",
+                attributes=[
+                    "- very_long_configuration_parameter_that_makes_the_node_extremely_wide: Dict[str, Any]",
+                    "- short: int",
+                ],
+            )
+
+            dot = g.to_dot()
+            # Check that wrapping occurred (BR tags present)
+            self.assertIn("<BR ALIGN='LEFT'/>", dot)
+            # Check that indentation is applied
+            self.assertIn("&nbsp;&nbsp;", dot)
+            # Short attributes should not be wrapped
+            self.assertIn("short: int", dot)
+
+    def test_text_wrapping_long_methods(self):
+        """Test that long method signatures are wrapped."""
+        with Graph("test_method_wrap", styles=UML_GRAPH) as g:
+            node = ClassNode(
+                "Service",
+                methods=[
+                    "+ perform_complex_operation(param1: str, param2: int, param3: List[str], param4: Dict[str, Any]): Result"
+                ],
+            )
+
+            dot = g.to_dot()
+            # Method should be wrapped at commas
+            self.assertIn("<BR ALIGN='LEFT'/>", dot)
+            # Check that params are split (looking for continuation)
+            self.assertIn("param1", dot)
+            self.assertIn("param2", dot)
+
+    def test_text_wrapping_custom_width(self):
+        """Test custom wrap_width parameter."""
+        with Graph("test_custom_width", styles=UML_GRAPH) as g:
+            # Use very narrow width to force wrapping
+            node = ClassNode(
+                "NarrowNode",
+                attributes=["- medium_length_attribute: str"],
+                wrap_width=20,
+            )
+
+            dot = g.to_dot()
+            # With width=20, this should wrap
+            self.assertIn("<BR ALIGN='LEFT'/>", dot)
+
+    def test_text_wrapping_interface_node(self):
+        """Test that InterfaceNode also supports text wrapping."""
+        with Graph("test_interface_wrap", styles=UML_GRAPH) as g:
+            node = InterfaceNode(
+                "ComplexInterface",
+                methods=[
+                    "+ execute_service_request(request_id: str, payload: Dict[str, Any], timeout: int): Response"
+                ],
+            )
+
+            dot = g.to_dot()
+            self.assertIn("<BR ALIGN='LEFT'/>", dot)
+
+    def test_text_wrapping_abstract_class_node(self):
+        """Test that AbstractClassNode also supports text wrapping."""
+        with Graph("test_abstract_wrap", styles=UML_GRAPH) as g:
+            node = AbstractClassNode(
+                "AbstractBase",
+                attributes=[
+                    "# protected_long_configuration_with_very_detailed_type: Dict[str, List[Tuple[int, str]]]"
+                ],
+            )
+
+            dot = g.to_dot()
+            self.assertIn("<BR ALIGN='LEFT'/>", dot)
 
 
 class TestMindMaps(unittest.TestCase):
@@ -359,6 +435,305 @@ class TestDiagramIntegration(unittest.TestCase):
             MindNode("Test")
             dot2 = g2.to_dot()
             self.assertIn('splines="curved"', dot2)
+
+
+class TestUMLSubgraphIntegration(unittest.TestCase):
+    """Test UML diagram components integration with Subgraph and native features."""
+
+    def test_uml_nodes_in_subgraph(self):
+        """Test that UML nodes are correctly registered to subgraphs."""
+        with Graph("test_uml_subgraph", styles=UML_GRAPH) as g:
+            with Subgraph("package1") as s1:
+                class1 = ClassNode(
+                    "UserService",
+                    attributes=["- users: List[User]"],
+                    methods=["+ getUser(id: int): User"],
+                )
+                interface1 = InterfaceNode("IService", methods=["+ execute(): void"])
+
+            dot = g.to_dot()
+            # Verify subgraph exists
+            self.assertIn('subgraph "cluster_package1"', dot)
+            # Verify UML nodes are in the subgraph
+            self.assertIn("UserService", dot)
+            self.assertIn("IService", dot)
+            self.assertIn("interface", dot)
+            # Verify nodes are registered to subgraph (not top-level)
+            self.assertEqual(len(s1._nodes), 2)
+            self.assertIn("UserService", s1._nodes)
+            self.assertIn("IService", s1._nodes)
+
+    def test_multiple_uml_node_types_in_subgraph(self):
+        """Test multiple UML node types in same subgraph."""
+        with Graph("test_multi_types", styles=UML_GRAPH) as g:
+            with Subgraph("domain_layer") as sub:
+                abstract = AbstractClassNode(
+                    "BaseEntity", attributes=["# id: int"], methods=["+ save(): void"]
+                )
+                concrete = ClassNode("User", attributes=["+ name: str"])
+                iface = InterfaceNode("IRepository", methods=["+ findById(): Entity"])
+
+            dot = g.to_dot()
+            self.assertIn("BaseEntity", dot)
+            self.assertIn("User", dot)
+            self.assertIn("IRepository", dot)
+            self.assertIn("abstract", dot)
+            self.assertIn("interface", dot)
+            self.assertEqual(len(sub._nodes), 3)
+
+    def test_uml_edges_across_subgraphs(self):
+        """Test UML edges connecting nodes in different subgraphs."""
+        with Graph("test_cross_subgraph", styles=UML_GRAPH) as g:
+            with Subgraph("domain") as s1:
+                entity = ClassNode("Entity", attributes=["+ id: int"])
+
+            with Subgraph("services") as s2:
+                service = ClassNode(
+                    "EntityService", methods=["+ getEntity(id): Entity"]
+                )
+
+            # Create edge across subgraphs
+            service >> entity | DependencyEdge(label="uses")
+
+            dot = g.to_dot()
+            # Verify both subgraphs exist
+            self.assertIn('subgraph "cluster_domain"', dot)
+            self.assertIn('subgraph "cluster_services"', dot)
+            # Verify edge exists
+            self.assertIn('"EntityService" -> "Entity"', dot)
+            self.assertIn('style="dashed"', dot)
+            self.assertIn('label="uses"', dot)
+
+    def test_inheritance_across_subgraphs(self):
+        """Test inheritance relationships across subgraphs."""
+        with Graph("test_inheritance_cross", styles=UML_GRAPH) as g:
+            with Subgraph("base"):
+                base = AbstractClassNode("Animal", methods=["+ speak(): void"])
+
+            with Subgraph("derived"):
+                dog = ClassNode("Dog", methods=["+ bark(): void"])
+                cat = ClassNode("Cat", methods=["+ meow(): void"])
+
+            dog >> base | InheritanceEdge()
+            cat >> base | InheritanceEdge()
+
+            dot = g.to_dot()
+            self.assertIn('"Dog" -> "Animal"', dot)
+            self.assertIn('"Cat" -> "Animal"', dot)
+            self.assertIn('arrowhead="empty"', dot)
+
+    def test_composition_in_subgraph(self):
+        """Test composition relationships within subgraph."""
+        with Graph("test_composition_subgraph", styles=UML_GRAPH) as g:
+            with Subgraph("vehicle_package"):
+                car = ClassNode("Car", attributes=["- engine: Engine"])
+                engine = ClassNode("Engine", attributes=["+ power: int"])
+
+                car >> engine | CompositionEdge(label="1")
+
+            dot = g.to_dot()
+            self.assertIn('"Car" -> "Engine"', dot)
+            self.assertIn('arrowtail="diamond"', dot)
+            self.assertIn('label="1"', dot)
+
+    def test_nested_subgraphs_uml(self):
+        """Test UML diagram with nested subgraph structure (package hierarchy)."""
+        with Graph("test_nested_packages", styles=UML_GRAPH) as g:
+            with Subgraph("backend") as s1:
+                with Subgraph("models") as s2:
+                    user = ClassNode("User", attributes=["+ name: str", "+ email: str"])
+                    post = ClassNode("Post", attributes=["+ title: str"])
+
+                with Subgraph("services") as s3:
+                    user_service = ClassNode(
+                        "UserService", methods=["+ createUser(): User"]
+                    )
+
+            # Create relationships
+            user_service >> user | DependencyEdge()
+
+            dot = g.to_dot()
+            # Verify nested structure
+            self.assertIn('subgraph "cluster_backend"', dot)
+            self.assertIn('subgraph "cluster_models"', dot)
+            self.assertIn('subgraph "cluster_services"', dot)
+            # Verify nesting in object model
+            self.assertEqual(len(g._subgraphs), 1)  # Only backend is top-level
+            self.assertEqual(len(s1._subgraphs), 2)  # models and services are nested
+            self.assertIn("User", s2._nodes)
+            self.assertIn("UserService", s3._nodes)
+
+    def test_uml_tuple_fanout(self):
+        """Test UML nodes with tuple fan-out syntax."""
+        with Graph("test_fanout", styles=UML_GRAPH) as g:
+            base = AbstractClassNode("Shape", methods=["+ getArea(): float"])
+            circle = ClassNode("Circle")
+            square = ClassNode("Square")
+            triangle = ClassNode("Triangle")
+
+            # Fan-out: multiple derived classes inherit from base
+            # Each derived class creates edge to base using >> operator
+            circle >> base | InheritanceEdge()
+            square >> base | InheritanceEdge()
+            triangle >> base | InheritanceEdge()
+
+            dot = g.to_dot()
+            self.assertIn('"Circle" -> "Shape"', dot)
+            self.assertIn('"Square" -> "Shape"', dot)
+            self.assertIn('"Triangle" -> "Shape"', dot)
+            # Verify all edges have inheritance styling
+            self.assertEqual(dot.count('arrowhead="empty"'), 3)
+
+    def test_uml_edge_chaining(self):
+        """Test UML with edge chaining."""
+        with Graph("test_chain", styles=UML_GRAPH) as g:
+            a = ClassNode("A")
+            b = ClassNode("B")
+            c = ClassNode("C")
+
+            # Chain multiple dependencies
+            a >> b >> c | DependencyEdge()
+
+            dot = g.to_dot()
+            self.assertIn('"A" -> "B"', dot)
+            self.assertIn('"B" -> "C"', dot)
+            # Both edges should have dependency styling
+            self.assertEqual(dot.count('style="dashed"'), 2)
+
+    def test_uml_fanout_with_inheritance(self):
+        """Test combining fan-out with different edge types."""
+        with Graph("test_fanout_edges", styles=UML_GRAPH) as g:
+            with Subgraph("interfaces"):
+                drawable = InterfaceNode("Drawable", methods=["+ draw()"])
+
+            with Subgraph("implementations"):
+                shapes = [
+                    ClassNode("Circle"),
+                    ClassNode("Rectangle"),
+                    ClassNode("Polygon"),
+                ]
+
+            # All shapes implement drawable
+            for shape in shapes:
+                shape >> drawable | ImplementsEdge()
+
+            dot = g.to_dot()
+            self.assertIn('"Circle" -> "Drawable"', dot)
+            self.assertIn('"Rectangle" -> "Drawable"', dot)
+            self.assertIn('"Polygon" -> "Drawable"', dot)
+            # All should have dashed arrows (implements)
+            self.assertEqual(dot.count('style="dashed"'), 3)
+
+    def test_uml_subgraph_with_graph_styles(self):
+        """Test UML_GRAPH style is applied correctly with subgraphs."""
+        with Graph("test_graph_style", styles=UML_GRAPH) as g:
+            with Subgraph("package1"):
+                ClassNode("TestClass")
+
+            dot = g.to_dot()
+            # Verify UML_GRAPH styles are applied
+            self.assertIn('rankdir="TB"', dot)
+            self.assertIn('splines="ortho"', dot)
+
+    def test_association_with_multiplicity_in_subgraph(self):
+        """Test association edges with multiplicity labels in subgraphs."""
+        with Graph("test_association", styles=UML_GRAPH) as g:
+            with Subgraph("model"):
+                student = ClassNode("Student", attributes=["+ name: str"])
+                course = ClassNode("Course", attributes=["+ title: str"])
+
+                student >> course | AssociationEdge(
+                    label="enrolls in",
+                    multiplicity_source="*",
+                    multiplicity_target="*",
+                )
+
+            dot = g.to_dot()
+            self.assertIn('"Student" -> "Course"', dot)
+            self.assertIn('label="enrolls in"', dot)
+            self.assertIn('taillabel="*"', dot)
+            self.assertIn('headlabel="*"', dot)
+
+    def test_aggregation_across_subgraphs(self):
+        """Test aggregation relationships across subgraphs."""
+        with Graph("test_aggregation_cross", styles=UML_GRAPH) as g:
+            with Subgraph("organization"):
+                dept = ClassNode("Department")
+
+            with Subgraph("people"):
+                employee = ClassNode("Employee")
+
+            dept >> employee | AggregationEdge(label="0..*")
+
+            dot = g.to_dot()
+            self.assertIn('"Department" -> "Employee"', dot)
+            self.assertIn('arrowtail="odiamond"', dot)
+            self.assertIn('label="0..*"', dot)
+
+    def test_uml_renders_with_subgraphs(self):
+        """End-to-end test: verify graphviz can render UML with subgraphs."""
+        with Graph("e2e_uml_subgraph", styles=UML_GRAPH) as g:
+            with Subgraph("domain") as s1:
+                base = AbstractClassNode("BaseEntity", methods=["+ save(): void"])
+                user = ClassNode("User", attributes=["+ name: str"])
+                post = ClassNode("Post", attributes=["+ title: str"])
+
+                user >> base | InheritanceEdge()
+                post >> base | InheritanceEdge()
+
+            with Subgraph("services") as s2:
+                service = InterfaceNode("IService", methods=["+ execute(): void"])
+                user_service = ClassNode("UserService")
+
+                user_service >> service | ImplementsEdge()
+                user_service >> user | DependencyEdge()
+
+            # This will raise if graphviz rejects the DOT
+            svg = render_to_svg(g.to_dot())
+            self.assertIn("<svg", svg)
+            self.assertIn("BaseEntity", svg)
+            self.assertIn("UserService", svg)
+
+    def test_complex_uml_with_all_features(self):
+        """Test complex UML diagram combining all features."""
+        with Graph("complex_uml_complete", styles=UML_GRAPH) as g:
+            # Multiple nested packages
+            with Subgraph("application") as app:
+                with Subgraph("domain") as domain:
+                    entity = AbstractClassNode(
+                        "Entity", attributes=["# id: int"], methods=["+ save(): void"]
+                    )
+                    user = ClassNode("User", attributes=["+ email: str"])
+                    user >> entity | InheritanceEdge()
+
+                with Subgraph("repository") as repo:
+                    i_repo = InterfaceNode("IRepository", methods=["+ save(e: Entity)"])
+                    user_repo = ClassNode("UserRepository")
+                    user_repo >> i_repo | ImplementsEdge()
+                    user_repo >> user | DependencyEdge()
+
+                with Subgraph("service") as svc:
+                    user_svc = ClassNode(
+                        "UserService", methods=["+ createUser(data): User"]
+                    )
+                    user_svc >> user_repo | AggregationEdge()
+
+            dot = g.to_dot()
+            # Verify structure
+            self.assertIn('subgraph "cluster_application"', dot)
+            self.assertIn('subgraph "cluster_domain"', dot)
+            self.assertIn('subgraph "cluster_repository"', dot)
+            self.assertIn('subgraph "cluster_service"', dot)
+
+            # Verify all relationships
+            self.assertIn('"User" -> "Entity"', dot)
+            self.assertIn('"UserRepository" -> "IRepository"', dot)
+            self.assertIn('"UserRepository" -> "User"', dot)
+            self.assertIn('"UserService" -> "UserRepository"', dot)
+
+            # Verify it renders
+            svg = render_to_svg(dot)
+            self.assertIn("<svg", svg)
 
 
 if __name__ == "__main__":

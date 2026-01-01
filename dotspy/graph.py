@@ -9,6 +9,7 @@ from .constants import DIGRAPH, TB
 from .context import (
     get_current_graph,
     get_current_subgraph,
+    get_graph,
     reset_current_graph,
     reset_current_subgraph,
     set_current_graph,
@@ -75,6 +76,15 @@ class Graph(GraphAttributes):
         self._nodes.append(node)
 
     def _add_edge(self, edge: "Edge"):
+        # Check if an edge with same source and target already exists
+        # (ignoring attributes to prevent accidental duplicates)
+        for existing_edge in self._edges:
+            if (
+                existing_edge.source.name == edge.source.name
+                and existing_edge.target.name == edge.target.name
+            ):
+                # Duplicate found, skip adding
+                return
         self._edges.append(edge)
 
     def _add_subgraph(self, subgraph: "Subgraph"):
@@ -172,7 +182,7 @@ class Subgraph(GraphAttributes):
         if subgraph:
             subgraph._add_subgraph(self)
         else:
-            graph = get_current_graph()
+            graph = get_current_graph() or get_graph()
             if graph:
                 graph._add_subgraph(self)
 
