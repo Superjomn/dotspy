@@ -1,5 +1,6 @@
 """dotspy - A Pythonic wrapper for Graphviz DOT language."""
 
+from .base_graph import BaseGraph
 from .builtin_styles import (
     BIDIRECTIONAL,
     BLUE_EDGE,
@@ -65,6 +66,7 @@ __all__ = [
     "Edge",
     "Graph",
     "Subgraph",
+    "BaseGraph",
     # Style classes
     "NodeStyle",
     "EdgeStyle",
