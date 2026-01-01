@@ -21,8 +21,156 @@ from dotspy.diagrams import (
     NoteNode,
     UMLNoteEdge,
     UMLNoteNode,
+    create_node,
 )
 from dotspy.utils import render_to_svg
+
+
+class TestPlantUMLParser(unittest.TestCase):
+    """Test PlantUML parsing and node creation."""
+
+    def test_basic_class_parsing(self):
+        """Test parsing a basic class with attributes and methods."""
+        puml = """
+        class User {
+            - id: int
+            + name: str
+            + save(): void
+        }
+        """
+        with Graph("test_puml_basic", styles=UML_GRAPH) as g:
+            node = create_node(puml)
+
+            self.assertIsInstance(node, ClassNode)
+            self.assertEqual(node.name, "User")
+
+            dot = g.to_dot()
+            self.assertIn("User", dot)
+            self.assertIn("id: int", dot)
+            self.assertIn("name: str", dot)
+            self.assertIn("save(): void", dot)
+
+    def test_abstract_class_parsing(self):
+        """Test parsing an abstract class."""
+        puml = """
+        abstract class Shape {
+            {abstract} + getArea(): float
+            # color: str
+        }
+        """
+        with Graph("test_puml_abstract", styles=UML_GRAPH) as g:
+            node = create_node(puml)
+
+            self.assertIsInstance(node, AbstractClassNode)
+            self.assertEqual(node.name, "Shape")
+
+            dot = g.to_dot()
+            self.assertIn("Shape", dot)
+            self.assertIn("abstract", dot)  # Stereotype
+            self.assertIn("<I>", dot)  # Abstract method formatting
+            self.assertIn("getArea(): float", dot)
+
+    def test_interface_parsing(self):
+        """Test parsing an interface."""
+        puml = """
+        interface Drawable {
+            + draw(): void
+        }
+        """
+        with Graph("test_puml_interface", styles=UML_GRAPH) as g:
+            node = create_node(puml)
+
+            self.assertIsInstance(node, InterfaceNode)
+            self.assertEqual(node.name, "Drawable")
+
+            dot = g.to_dot()
+            self.assertIn("Drawable", dot)
+            self.assertIn("interface", dot)  # Stereotype
+            self.assertIn("draw(): void", dot)
+
+    def test_enum_parsing(self):
+        """Test parsing an enum."""
+        puml = """
+        enum Status {
+            PENDING
+            ACTIVE
+            COMPLETED
+        }
+        """
+        with Graph("test_puml_enum", styles=UML_GRAPH) as g:
+            node = create_node(puml)
+
+            self.assertIsInstance(node, ClassNode)
+            self.assertEqual(node.name, "Status")
+
+            dot = g.to_dot()
+            self.assertIn("Status", dot)
+            self.assertIn("(E)", dot)  # Spot icon
+            self.assertIn("enumeration", dot)  # Stereotype
+            self.assertIn("PENDING", dot)
+            self.assertIn("ACTIVE", dot)
+
+    def test_class_with_stereotype(self):
+        """Test parsing a class with custom stereotype."""
+        puml = """
+        class Service <<singleton>> {
+            {static} + getInstance()
+        }
+        """
+        with Graph("test_puml_stereotype", styles=UML_GRAPH) as g:
+            node = create_node(puml)
+
+            self.assertIsInstance(node, ClassNode)
+            self.assertEqual(node.name, "Service")
+
+            dot = g.to_dot()
+            self.assertIn("singleton", dot)
+            self.assertIn("<U>", dot)  # Static modifier
+
+    def test_member_visibility(self):
+        """Test different visibility modifiers."""
+        puml = """
+        class VisibilityTest {
+            + public
+            - private
+            # protected
+            ~ package
+        }
+        """
+        with Graph("test_puml_visibility", styles=UML_GRAPH) as g:
+            create_node(puml)
+
+            dot = g.to_dot()
+            self.assertIn("+ public", dot)
+            self.assertIn("- private", dot)
+            self.assertIn("# protected", dot)
+            self.assertIn("~ package", dot)
+
+    def test_multiline_and_comments(self):
+        """Test parsing with comments and whitespace."""
+        puml = """
+        class CommentTest {
+            ' This is a comment
+            /' Multi-line
+               comment '/
+
+            + validField
+        }
+        """
+        with Graph("test_puml_comments", styles=UML_GRAPH) as g:
+            create_node(puml)
+
+            dot = g.to_dot()
+            self.assertIn("validField", dot)
+            self.assertNotIn("This is a comment", dot)
+
+    def test_invalid_syntax(self):
+        """Test error handling for invalid syntax."""
+        with self.assertRaises(ValueError):
+            create_node("invalid definition { }")
+
+        with self.assertRaises(ValueError):
+            create_node("class MissingBrace")
 
 
 class TestUMLDiagrams(unittest.TestCase):

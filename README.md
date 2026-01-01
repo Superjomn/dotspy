@@ -158,6 +158,35 @@ with Graph("uml", styles=UML_GRAPH) as g:
     g.render("uml.png")
 ```
 
+### PlantUML Syntax Support
+
+You can also define nodes using PlantUML syntax for a more concise definition:
+
+```python
+from dotspy import Graph
+from dotspy.diagrams import create_node, InheritanceEdge, UML_GRAPH
+
+with Graph("uml_puml", styles=UML_GRAPH) as g:
+    # Define a class using PlantUML syntax
+    user = create_node("""
+    class User {
+        + name: str
+        + email: str
+        + login(): void
+    }
+    """)
+
+    # Define an interface
+    drawable = create_node("""
+    interface Drawable {
+        + draw(): void
+    }
+    """)
+
+    # Mix with standard Python API
+    user >> drawable | InheritanceEdge()  # Just for example
+```
+
 **Available UML Components:**
 - Nodes: `ClassNode`, `InterfaceNode`, `AbstractClassNode`
 - Edges: `InheritanceEdge`, `ImplementsEdge`, `CompositionEdge`, `AggregationEdge`, `AssociationEdge`, `DependencyEdge`

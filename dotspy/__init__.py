@@ -49,6 +49,7 @@ from .diagrams import (
     NoteEdge,
     NoteNode,
     TopicNode,
+    create_node,
 )
 from .edge import Edge
 from .graph import Graph, Subgraph
@@ -159,6 +160,7 @@ __all__ = [
     "AssociationEdge",
     "DependencyEdge",
     "UML_GRAPH",
+    "create_node",
     "MindNode",
     "NoteNode",
     "NoteEdge",

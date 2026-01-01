@@ -19,6 +19,7 @@ from .mindmap import (
     NoteNode,
     TopicNode,
 )
+from .plantuml_parser import create_node
 from .uml import (
     UML_GRAPH,
     AbstractClassNode,
@@ -53,6 +54,7 @@ __all__ = [
     "DependencyEdge",
     "UMLNoteEdge",
     "UML_GRAPH",
+    "create_node",
     # Mind map components
     "MindNode",
     "NoteNode",
