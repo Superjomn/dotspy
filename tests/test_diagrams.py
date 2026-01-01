@@ -19,6 +19,8 @@ from dotspy.diagrams import (
     MindNode,
     NoteEdge,
     NoteNode,
+    UMLNoteEdge,
+    UMLNoteNode,
 )
 from dotspy.utils import render_to_svg
 
@@ -252,6 +254,153 @@ class TestUMLDiagrams(unittest.TestCase):
 
             dot = g.to_dot()
             self.assertIn("<BR ALIGN='LEFT'/>", dot)
+
+    def test_uml_note_node(self):
+        """Test UMLNoteNode creation and styling."""
+        with Graph("test_uml_note", styles=UML_GRAPH) as g:
+            note = UMLNoteNode("This is a documentation note")
+
+            dot = g.to_dot()
+            self.assertIn("This is a documentation note", dot)
+            self.assertIn('shape="note"', dot)
+            self.assertIn('fillcolor="lightyellow"', dot)
+
+    def test_uml_note_edge(self):
+        """Test UMLNoteEdge styling for note connections."""
+        with Graph("test_uml_note_edge", styles=UML_GRAPH) as g:
+            user = ClassNode("User", attributes=["+ name: str"])
+            note = UMLNoteNode("Represents a system user")
+
+            user >> note | UMLNoteEdge()
+
+            dot = g.to_dot()
+            # Note name is truncated to first 20 chars
+            self.assertIn('"User" -> "note_Represents a system "', dot)
+            self.assertIn('style="dashed"', dot)
+            self.assertIn('dir="none"', dot)
+
+    def test_static_member_formatting(self):
+        """Test {static} modifier renders as underlined."""
+        with Graph("test_static_member", styles=UML_GRAPH) as g:
+            cls = ClassNode(
+                "Singleton",
+                attributes=["{static} - instance: Singleton"],
+                methods=["{static} + getInstance(): Singleton"],
+            )
+
+            dot = g.to_dot()
+            # Check for underline HTML tags
+            self.assertIn("<U>", dot)
+            self.assertIn("</U>", dot)
+            self.assertIn("instance: Singleton", dot)
+            self.assertIn("getInstance(): Singleton", dot)
+
+    def test_abstract_member_formatting(self):
+        """Test {abstract} modifier renders as italic."""
+        with Graph("test_abstract_member", styles=UML_GRAPH) as g:
+            cls = ClassNode(
+                "Shape",
+                methods=["{abstract} + draw(): void", "{abstract} + getArea(): float"],
+            )
+
+            dot = g.to_dot()
+            # Check for italic HTML tags
+            self.assertIn("<I>", dot)
+            self.assertIn("</I>", dot)
+            self.assertIn("draw(): void", dot)
+            self.assertIn("getArea(): float", dot)
+
+    def test_mixed_member_modifiers(self):
+        """Test mixing static and abstract modifiers in same class."""
+        with Graph("test_mixed_modifiers", styles=UML_GRAPH) as g:
+            cls = ClassNode(
+                "MixedClass",
+                attributes=[
+                    "{static} - count: int",
+                    "+ name: str",
+                ],
+                methods=[
+                    "{abstract} + process(): void",
+                    "{static} + getCount(): int",
+                    "+ getName(): str",
+                ],
+            )
+
+            dot = g.to_dot()
+            # Both underline and italic should be present
+            self.assertIn("<U>", dot)
+            self.assertIn("<I>", dot)
+            # Regular members should also be present
+            self.assertIn("name: str", dot)
+            self.assertIn("getName(): str", dot)
+
+    def test_spot_icon_default_colors(self):
+        """Test spot icons with default colors."""
+        with Graph("test_spot_defaults", styles=UML_GRAPH) as g:
+            class_c = ClassNode("MyClass", spot="C")
+            interface_i = ClassNode("MyInterface", spot="I")
+            abstract_a = ClassNode("MyAbstract", spot="A")
+            enum_e = ClassNode("MyEnum", spot="E")
+
+            dot = g.to_dot()
+            # Check that spot letters are in the output with parentheses
+            self.assertIn("(C)", dot)
+            self.assertIn("(I)", dot)
+            self.assertIn("(A)", dot)
+            self.assertIn("(E)", dot)
+            # Check for default colors
+            self.assertIn("BGCOLOR='lightblue'", dot)
+            self.assertIn("BGCOLOR='lightyellow'", dot)
+            self.assertIn("BGCOLOR='lightgray'", dot)
+            self.assertIn("BGCOLOR='lightgreen'", dot)
+
+    def test_spot_icon_custom_color(self):
+        """Test spot icon with custom color override."""
+        with Graph("test_spot_custom", styles=UML_GRAPH) as g:
+            cls = ClassNode("CustomClass", spot="X", spot_color="pink")
+
+            dot = g.to_dot()
+            self.assertIn("(X)", dot)
+            self.assertIn("BGCOLOR='pink'", dot)
+
+    def test_spot_icon_with_stereotype(self):
+        """Test spot icon combined with stereotype."""
+        with Graph("test_spot_stereotype", styles=UML_GRAPH) as g:
+            iface = InterfaceNode("Drawable", methods=["+ draw(): void"])
+            # InterfaceNode has stereotype="interface" built-in
+
+            dot = g.to_dot()
+            self.assertIn("interface", dot)
+            self.assertIn("Drawable", dot)
+
+    def test_comprehensive_uml_features(self):
+        """Test all new features together in one diagram."""
+        with Graph("test_comprehensive", styles=UML_GRAPH) as g:
+            # Class with spot, static, and abstract members
+            shape = ClassNode(
+                "Shape",
+                spot="A",
+                attributes=[
+                    "{static} - count: int",
+                    "# color: str",
+                ],
+                methods=[
+                    "{abstract} + draw(): void",
+                    "{static} + getCount(): int",
+                ],
+            )
+
+            # Note attached to the class
+            note = UMLNoteNode("Abstract base class for all shapes")
+            shape >> note | UMLNoteEdge()
+
+            dot = g.to_dot()
+            # Verify all features are present
+            self.assertIn("(A)", dot)  # Spot icon
+            self.assertIn("<U>", dot)  # Static
+            self.assertIn("<I>", dot)  # Abstract
+            self.assertIn('shape="note"', dot)  # Note node
+            self.assertIn('style="dashed"', dot)  # Note edge
 
 
 class TestMindMaps(unittest.TestCase):

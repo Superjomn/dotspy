@@ -30,6 +30,8 @@ from .uml import (
     ImplementsEdge,
     InheritanceEdge,
     InterfaceNode,
+    UMLNoteEdge,
+    UMLNoteNode,
 )
 
 __all__ = [
@@ -42,12 +44,14 @@ __all__ = [
     "ClassNode",
     "InterfaceNode",
     "AbstractClassNode",
+    "UMLNoteNode",
     "InheritanceEdge",
     "ImplementsEdge",
     "CompositionEdge",
     "AggregationEdge",
     "AssociationEdge",
     "DependencyEdge",
+    "UMLNoteEdge",
     "UML_GRAPH",
     # Mind map components
     "MindNode",

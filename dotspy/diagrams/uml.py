@@ -29,6 +29,22 @@ UML_ABSTRACT_STYLE = NodeStyle(
     fontname="Helvetica-Oblique",
 )
 
+UML_NOTE_STYLE = NodeStyle(
+    shape="note",
+    style=FILLED,
+    fillcolor="lightyellow",
+    fontname="Helvetica",
+    fontsize=10,
+)
+
+# Spot icon colors (PlantUML-style class indicators)
+SPOT_COLORS = {
+    "C": "lightblue",  # Class (default)
+    "I": "lightyellow",  # Interface
+    "A": "lightgray",  # Abstract
+    "E": "lightgreen",  # Enum
+}
+
 
 def wrap_text(text: str, width: int = 60, indent: str = "&nbsp;&nbsp;") -> str:
     """
@@ -80,6 +96,37 @@ def wrap_text(text: str, width: int = 60, indent: str = "&nbsp;&nbsp;") -> str:
     return result
 
 
+def format_member(text: str, width: int = 60, indent: str = "&nbsp;&nbsp;") -> str:
+    """
+    Format a class member with modifier support and wrapping.
+
+    Supports modifiers:
+        {static} - Underline the member (e.g., "{static} count: int")
+        {abstract} - Italicize the member (e.g., "{abstract} + draw(): void")
+
+    Args:
+        text: Member text with optional modifier prefix
+        width: Maximum width before wrapping
+        indent: Indentation for wrapped lines
+
+    Returns:
+        HTML-formatted and wrapped member text
+    """
+    is_static = text.startswith("{static}")
+    is_abstract = text.startswith("{abstract}")
+
+    # Strip modifier prefix
+    clean_text = text.replace("{static}", "").replace("{abstract}", "").strip()
+    wrapped = wrap_text(clean_text, width, indent)
+
+    # Apply HTML formatting
+    if is_static:
+        return f"<U>{wrapped}</U>"
+    elif is_abstract:
+        return f"<I>{wrapped}</I>"
+    return wrapped
+
+
 class ClassNode(HTMLNode, DiagramNode):
     """
     UML class node with compartments for attributes and methods.
@@ -105,6 +152,8 @@ class ClassNode(HTMLNode, DiagramNode):
         stereotype: Optional[str] = None,
         styles: Optional[Union[NodeStyle, List[NodeStyle]]] = None,
         wrap_width: int = 60,
+        spot: Optional[str] = None,
+        spot_color: Optional[str] = None,
         **attrs,
     ):
         """
@@ -117,6 +166,8 @@ class ClassNode(HTMLNode, DiagramNode):
             stereotype: Optional stereotype (e.g., "<<interface>>", "<<abstract>>")
             styles: Additional NodeStyle objects to apply
             wrap_width: Maximum width of text before wrapping (default: 60)
+            spot: Optional spot character (e.g., "C", "I", "A", "E") for class indicator
+            spot_color: Optional color for spot (overrides default SPOT_COLORS)
             **attrs: Additional node attributes
         """
         # Build sections for the table
@@ -126,7 +177,9 @@ class ClassNode(HTMLNode, DiagramNode):
         if attributes:
             sections.append(
                 {
-                    "rows": [wrap_text(attr, width=wrap_width) for attr in attributes],
+                    "rows": [
+                        format_member(attr, width=wrap_width) for attr in attributes
+                    ],
                     "align": "LEFT",
                 }
             )
@@ -135,7 +188,9 @@ class ClassNode(HTMLNode, DiagramNode):
         if methods:
             sections.append(
                 {
-                    "rows": [wrap_text(method, width=wrap_width) for method in methods],
+                    "rows": [
+                        format_member(method, width=wrap_width) for method in methods
+                    ],
                     "align": "LEFT",
                 }
             )
@@ -144,6 +199,13 @@ class ClassNode(HTMLNode, DiagramNode):
         title = escape_html(class_name)
         if stereotype:
             title = f"&lt;&lt;{escape_html(stereotype)}&gt;&gt;<BR/>{title}"
+
+        # Add spot icon if provided (simple text-based approach)
+        if spot:
+            spot_bg = spot_color or SPOT_COLORS.get(spot, "lightgray")
+            # Use a simple circle character with colored background via FONT tag
+            # Format: (X) prefix where X is the spot letter
+            title = f"<FONT COLOR='white' BGCOLOR='{spot_bg}'>({escape_html(spot)})</FONT> {title}"
 
         # Create HTML table
         html_content = create_table_html(title, sections)
@@ -257,6 +319,57 @@ class AbstractClassNode(ClassNode):
             stereotype="abstract",
             styles=style_list,
             wrap_width=wrap_width,
+            **attrs,
+        )
+
+
+class UMLNoteNode(DiagramNode):
+    """
+    UML note for documenting classes and relationships.
+
+    Represents a note or comment that can be attached to UML elements.
+    Uses a note shape with yellow background. When used as a target with >>,
+    UMLNoteEdge styling can be applied.
+
+    Example:
+        >>> note = UMLNoteNode("This class handles authentication")
+        >>> user_class >> note | UMLNoteEdge()
+    """
+
+    # Marker attribute to identify UMLNoteNode for auto-styling
+    _is_note_node = True
+
+    def __init__(
+        self,
+        text: str,
+        name: Optional[str] = None,
+        styles: Optional[Union[NodeStyle, List[NodeStyle]]] = None,
+        **attrs,
+    ):
+        """
+        Initialize a UML note node.
+
+        Args:
+            text: Note text content
+            name: Unique identifier (uses text if not provided)
+            styles: Additional NodeStyle objects to apply
+            **attrs: Additional node attributes
+        """
+        # Use text as name if name not provided
+        if name is None:
+            name = f"note_{text[:20]}"  # Use first 20 chars for unique name
+
+        style_list = [UML_NOTE_STYLE]
+        if styles:
+            if isinstance(styles, list):
+                style_list.extend(styles)
+            else:
+                style_list.append(styles)
+
+        super().__init__(
+            name=name,
+            label=text,
+            styles=style_list,
             **attrs,
         )
 
@@ -418,6 +531,29 @@ class DependencyEdge(DiagramEdge):
         }
         if label:
             edge_attrs["label"] = label
+        edge_attrs.update(attrs)
+        style = EdgeStyle(**edge_attrs)
+        super().__init__(styles=style)
+
+
+class UMLNoteEdge(DiagramEdge):
+    """
+    UML note edge (dashed line for connecting notes).
+
+    Represents an attachment between a UML note and a class or relationship.
+    Uses a dashed line with no arrow for a subtle connection.
+
+    Example:
+        >>> class_node >> note | UMLNoteEdge()
+    """
+
+    def __init__(self, **attrs):
+        edge_attrs = {
+            "dir": "none",  # No arrows for note connections
+            "style": DASHED,
+            "penwidth": 1.0,
+            "color": "gray60",
+        }
         edge_attrs.update(attrs)
         style = EdgeStyle(**edge_attrs)
         super().__init__(styles=style)
