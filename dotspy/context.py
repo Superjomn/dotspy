@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List, Optional
 if TYPE_CHECKING:
     from .graph import Graph, Subgraph
     from .style import EdgeStyle, NodeStyle
+    from .themes import Theme
 
 # Context variables
 _current_graph: ContextVar[Optional["Graph"]] = ContextVar(
@@ -18,6 +19,7 @@ _active_node_styles: ContextVar[List["NodeStyle"]] = ContextVar(
 _active_edge_styles: ContextVar[List["EdgeStyle"]] = ContextVar(
     "active_edge_styles", default=[]
 )
+_active_theme: ContextVar[Optional["Theme"]] = ContextVar("active_theme", default=None)
 _singleton_graph: Optional["Graph"] = None
 
 
@@ -78,6 +80,18 @@ def push_edge_style(style: "EdgeStyle"):
 
 def pop_edge_style(token):
     _active_edge_styles.reset(token)
+
+
+def get_active_theme() -> Optional["Theme"]:
+    return _active_theme.get()
+
+
+def push_theme(theme: "Theme"):
+    return _active_theme.set(theme)
+
+
+def pop_theme(token):
+    _active_theme.reset(token)
 
 
 def set_graph(graph: "Graph"):

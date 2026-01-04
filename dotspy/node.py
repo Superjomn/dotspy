@@ -5,6 +5,7 @@ from pydantic import ConfigDict, Field, PrivateAttr
 from .attributes import NodeAttributes
 from .context import (
     get_active_node_styles,
+    get_active_theme,
     get_current_graph,
     get_current_subgraph,
     get_graph,
@@ -49,6 +50,12 @@ class Node(NodeAttributes):
         if name is None:
             name = self._generate_name()
 
+        # Resolve active theme styles
+        theme_attrs = {}
+        active_theme = get_active_theme()
+        if active_theme:
+            theme_attrs = active_theme.node.to_dict()
+
         # Merge active context styles
         context_attrs = {}
         for ctx_style in get_active_node_styles():
@@ -58,8 +65,8 @@ class Node(NodeAttributes):
         style_attrs = merge_styles(styles)
 
         # Combine all attributes
-        # Priority: Context < Style Object < Direct Attributes
-        combined_attrs = {**context_attrs, **style_attrs, **attrs}
+        # Priority: Theme < Context < Style Object < Direct Attributes
+        combined_attrs = {**theme_attrs, **context_attrs, **style_attrs, **attrs}
 
         # Initialize Pydantic model
         super().__init__(name=name, **combined_attrs)

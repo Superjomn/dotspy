@@ -10,6 +10,12 @@ from .context import (
     get_current_graph,
     get_current_subgraph,
     get_graph,
+    pop_edge_style,
+    pop_node_style,
+    pop_theme,
+    push_edge_style,
+    push_node_style,
+    push_theme,
     reset_current_graph,
     reset_current_subgraph,
     set_current_graph,
@@ -17,6 +23,7 @@ from .context import (
 )
 from .context import set_graph as set_singleton_graph
 from .style import GraphStyle, merge_styles
+from .themes import THEMES, Theme
 
 if TYPE_CHECKING:
     from .edge import Edge
@@ -36,6 +43,10 @@ class Graph(GraphAttributes):
     _edges: List["Edge"] = PrivateAttr(default_factory=list)
     _subgraphs: List["Subgraph"] = PrivateAttr(default_factory=list)
     _token: Any = PrivateAttr(default=None)
+    _theme_token: Any = PrivateAttr(default=None)
+    _node_style_token: Any = PrivateAttr(default=None)
+    _edge_style_token: Any = PrivateAttr(default=None)
+    _theme: Optional[Theme] = PrivateAttr(default=None)
 
     def __init__(
         self,
@@ -43,8 +54,28 @@ class Graph(GraphAttributes):
         graph_type: str = DIGRAPH,
         styles: Optional[Union[GraphStyle, List[GraphStyle]]] = None,
         rankdir: Optional[str] = None,
+        theme: Optional[str] = None,
         **attrs,
     ):
+        # Resolve theme if provided
+        theme_obj = None
+        if theme:
+            if theme in THEMES:
+                theme_obj = THEMES[theme]
+                # Merge theme graph styles
+                # Explicit styles take precedence over theme styles
+                theme_graph_style = theme_obj.graph
+                if styles:
+                    if isinstance(styles, list):
+                        styles = [theme_graph_style] + styles
+                    else:
+                        styles = [theme_graph_style, styles]
+                else:
+                    styles = theme_graph_style
+            else:
+                # Warning or error? For now just ignore or maybe log
+                pass
+
         style_attrs = merge_styles(styles)
 
         # rankdir default handling
@@ -62,13 +93,36 @@ class Graph(GraphAttributes):
         object.__setattr__(self, "_edges", [])
         object.__setattr__(self, "_subgraphs", [])
         object.__setattr__(self, "_token", None)
+        object.__setattr__(self, "_theme_token", None)
+        object.__setattr__(self, "_node_style_token", None)
+        object.__setattr__(self, "_edge_style_token", None)
+        object.__setattr__(self, "_theme", theme_obj)
 
     def __enter__(self) -> "Graph":
         token = set_current_graph(self)
         object.__setattr__(self, "_token", token)
+
+        # Push theme and styles if present
+        if self._theme:
+            t_token = push_theme(self._theme)
+            n_token = push_node_style(self._theme.node)
+            e_token = push_edge_style(self._theme.edge)
+
+            object.__setattr__(self, "_theme_token", t_token)
+            object.__setattr__(self, "_node_style_token", n_token)
+            object.__setattr__(self, "_edge_style_token", e_token)
+
         return self
 
     def __exit__(self, *args):
+        # Pop styles in reverse order
+        if self._edge_style_token:
+            pop_edge_style(self._edge_style_token)
+        if self._node_style_token:
+            pop_node_style(self._node_style_token)
+        if self._theme_token:
+            pop_theme(self._theme_token)
+
         if self._token:
             reset_current_graph(self._token)
 
@@ -147,12 +201,17 @@ class Subgraph(GraphAttributes):
     _edges: List["Edge"] = PrivateAttr(default_factory=list)
     _subgraphs: List["Subgraph"] = PrivateAttr(default_factory=list)
     _token: Any = PrivateAttr(default=None)
+    _theme_token: Any = PrivateAttr(default=None)
+    _node_style_token: Any = PrivateAttr(default=None)
+    _edge_style_token: Any = PrivateAttr(default=None)
+    _theme: Optional[Theme] = PrivateAttr(default=None)
 
     def __init__(
         self,
         name: Optional[str] = None,
         cluster: bool = True,
         styles: Optional[Union[GraphStyle, List[GraphStyle]]] = None,
+        theme: Optional[str] = None,
         **attrs,
     ):
         # Normalize name
@@ -161,6 +220,21 @@ class Subgraph(GraphAttributes):
 
         if cluster and not name.startswith("cluster_"):
             name = f"cluster_{name}"
+
+        # Resolve theme if provided
+        theme_obj = None
+        if theme:
+            if theme in THEMES:
+                theme_obj = THEMES[theme]
+                # Merge theme graph styles
+                theme_graph_style = theme_obj.graph
+                if styles:
+                    if isinstance(styles, list):
+                        styles = [theme_graph_style] + styles
+                    else:
+                        styles = [theme_graph_style, styles]
+                else:
+                    styles = theme_graph_style
 
         style_attrs = merge_styles(styles)
 
@@ -173,6 +247,10 @@ class Subgraph(GraphAttributes):
         object.__setattr__(self, "_edges", [])
         object.__setattr__(self, "_subgraphs", [])
         object.__setattr__(self, "_token", None)
+        object.__setattr__(self, "_theme_token", None)
+        object.__setattr__(self, "_node_style_token", None)
+        object.__setattr__(self, "_edge_style_token", None)
+        object.__setattr__(self, "_theme", theme_obj)
 
         # Register with parent graph
         self._register()
@@ -189,9 +267,28 @@ class Subgraph(GraphAttributes):
     def __enter__(self) -> "Subgraph":
         token = set_current_subgraph(self)
         object.__setattr__(self, "_token", token)
+
+        # Push theme and styles if present
+        if self._theme:
+            t_token = push_theme(self._theme)
+            n_token = push_node_style(self._theme.node)
+            e_token = push_edge_style(self._theme.edge)
+
+            object.__setattr__(self, "_theme_token", t_token)
+            object.__setattr__(self, "_node_style_token", n_token)
+            object.__setattr__(self, "_edge_style_token", e_token)
+
         return self
 
     def __exit__(self, *args):
+        # Pop styles in reverse order
+        if self._edge_style_token:
+            pop_edge_style(self._edge_style_token)
+        if self._node_style_token:
+            pop_node_style(self._node_style_token)
+        if self._theme_token:
+            pop_theme(self._theme_token)
+
         if self._token:
             reset_current_subgraph(self._token)
 

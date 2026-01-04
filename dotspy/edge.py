@@ -3,7 +3,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from pydantic import ConfigDict, Field, PrivateAttr
 
 from .attributes import EdgeAttributes
-from .context import get_active_edge_styles, get_current_graph, get_graph
+from .context import (
+    get_active_edge_styles,
+    get_active_theme,
+    get_current_graph,
+    get_graph,
+)
 from .style import EdgeStyle, merge_styles
 
 if TYPE_CHECKING:
@@ -30,6 +35,12 @@ class Edge(EdgeAttributes):
         **attrs,
     ):
         # Resolve attributes from context and arguments
+        # Resolve active theme styles
+        theme_attrs = {}
+        active_theme = get_active_theme()
+        if active_theme:
+            theme_attrs = active_theme.edge.to_dict()
+
         context_attrs = {}
         for ctx_style in get_active_edge_styles():
             context_attrs.update(ctx_style.to_dict())
@@ -44,9 +55,20 @@ class Edge(EdgeAttributes):
             note_edge = NoteEdge()
             note_style = note_edge.to_style().to_dict()
             # NoteEdge styling takes precedence over context but not explicit styles
-            combined_attrs = {**context_attrs, **note_style, **style_attrs, **attrs}
+            combined_attrs = {
+                **theme_attrs,
+                **context_attrs,
+                **note_style,
+                **style_attrs,
+                **attrs,
+            }
         else:
-            combined_attrs = {**context_attrs, **style_attrs, **attrs}
+            combined_attrs = {
+                **theme_attrs,
+                **context_attrs,
+                **style_attrs,
+                **attrs,
+            }
 
         super().__init__(source=source, target=target, **combined_attrs)
 

@@ -56,6 +56,17 @@ from .edge import Edge
 from .graph import Graph, Subgraph
 from .node import HTMLNode, Node
 from .style import EdgeStyle, GraphStyle, NodeStyle
+from .themes import (
+    BLUEPRINT_THEME,
+    DARK_THEME,
+    DEFAULT_THEME,
+    FOREST_THEME,
+    MINIMAL_THEME,
+    OCEAN_THEME,
+    PASTEL_THEME,
+    THEMES,
+    Theme,
+)
 from .utils import render_to_file, render_to_svg
 
 __version__ = "0.1.0"
@@ -71,6 +82,16 @@ __all__ = [
     "NodeStyle",
     "EdgeStyle",
     "GraphStyle",
+    # Theme classes and constants
+    "Theme",
+    "THEMES",
+    "DEFAULT_THEME",
+    "DARK_THEME",
+    "PASTEL_THEME",
+    "BLUEPRINT_THEME",
+    "FOREST_THEME",
+    "OCEAN_THEME",
+    "MINIMAL_THEME",
     # Singleton functions
     "set_graph",
     "get_graph",
